@@ -1,0 +1,29 @@
+# --- Segredos: NUNCA commitar ---
+.env
+.env.*
+!.env.example
+*.token
+credentials.json
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# --- Node / React ---
+node_modules/
+dist/
+build/
+.vite/
+
+# --- Worker ---
+worker/tmp/
+*.log
+
+# --- Sistema ---
+Thumbs.db
+desktop.ini
+.DS_Store

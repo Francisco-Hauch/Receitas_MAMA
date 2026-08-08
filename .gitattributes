@@ -1,0 +1,14 @@
+# Normaliza quebras de linha: LF no repositorio, nativo no disco.
+# Resolve o aviso "LF will be replaced by CRLF" no Windows.
+* text=auto eol=lf
+
+# Binarios: nunca normalizar nem tentar fazer diff de texto
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.webp binary
+*.pdf  binary
+*.mp3  binary
+*.m4a  binary
+*.ogg  binary
+*.wav  binary
