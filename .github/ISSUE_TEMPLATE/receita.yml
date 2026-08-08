@@ -1,0 +1,50 @@
+name: Nova receita
+description: Enviar uma receita por foto, áudio, link ou texto
+title: "[receita] "
+labels: ["receita", "status:novo"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Anexe a foto ou o áudio, ou cole o link.
+        Fica na fila até o PC ligar — não precisa esperar nada.
+
+  - type: dropdown
+    id: tipo
+    attributes:
+      label: Tipo de entrada
+      options:
+        - foto
+        - audio
+        - link
+        - texto
+    validations:
+      required: true
+
+  - type: textarea
+    id: conteudo
+    attributes:
+      label: Conteúdo
+      description: >
+        Arraste a foto ou o áudio para dentro desta caixa,
+        ou cole o link, ou digite a receita direto.
+      placeholder: |
+        Arraste o arquivo aqui, ou cole https://...
+    validations:
+      required: true
+
+  - type: input
+    id: titulo
+    attributes:
+      label: Nome da receita
+      description: Se você já souber. Senão deixo o Claude sugerir.
+      placeholder: Bolo de fubá da vovó
+
+  - type: textarea
+    id: notas
+    attributes:
+      label: Observações
+      description: Qualquer coisa que ajude na hora de interpretar.
+      placeholder: |
+        A vó usava banha no lugar do óleo.
+        A letra do "fermento" está ilegível, era 1 colher mesmo.

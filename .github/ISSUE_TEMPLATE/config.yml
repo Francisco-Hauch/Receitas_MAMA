@@ -1,0 +1,3 @@
+# Desliga a opção de abrir issue em branco.
+# Assim toda issue nova entra no formato que o worker sabe ler.
+blank_issues_enabled: false
