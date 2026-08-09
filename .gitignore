@@ -5,6 +5,12 @@
 *.token
 credentials.json
 
+# Arquivos avulsos onde token costuma ser colado "só um minuto" e esquecido.
+# O certo e nao existir; isto aqui e a rede de seguranca.
+Pathgit.txt
+*token*.txt
+*.pat
+
 # --- Python ---
 __pycache__/
 *.py[cod]
