@@ -11,6 +11,12 @@ Pathgit.txt
 *token*.txt
 *.pat
 
+# Secrets do Worker para rodar local (senha, segredo de sessao).
+# Os de producao ficam no painel da Cloudflare, nunca em arquivo.
+.dev.vars
+.dev.vars.*
+.wrangler/
+
 # --- Python ---
 __pycache__/
 *.py[cod]

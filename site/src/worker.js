@@ -12,7 +12,17 @@
  * Access ligado, esta rota fica aberta para quem souber o endereço.
  */
 
+import {
+  criarSessao,
+  encerrarSessao,
+  paginaLogin,
+  senhaConfere,
+  sessaoValida,
+} from "./autenticar.js";
+
 const CAMINHO = "/api/receita";
+const LOGIN = "/entrar";
+const SAIR = "/sair";
 
 const TIPOS_ACEITOS = new Set(["foto", "audio", "link", "texto"]);
 const SEM_RESPOSTA = "_No response_";
@@ -162,20 +172,84 @@ async function criarReceita(request, env) {
   }
 }
 
+const html = (corpo, status = 200, cabecalhos = {}) =>
+  new Response(corpo, {
+    status,
+    headers: { "content-type": "text/html; charset=utf-8", ...cabecalhos },
+  });
+
+/** Quantas tentativas de senha esta origem ainda pode gastar. */
+async function podeTentar(request, env) {
+  // Sem o binding configurado, recusa: um login sem freio de tentativa é pior
+  // que um site fora do ar, e o erro fica visível em vez de silencioso.
+  if (!env.LIMITE_LOGIN || !env.LIMITE_GLOBAL) return false;
+
+  const ip = request.headers.get("cf-connecting-ip") || "desconhecido";
+  const porIp = await env.LIMITE_LOGIN.limit({ key: ip });
+  const geral = await env.LIMITE_GLOBAL.limit({ key: "entrar" });
+
+  return porIp.success && geral.success;
+}
+
+async function entrar(request, env) {
+  if (request.method === "GET") return html(paginaLogin());
+  if (request.method !== "POST") return html(paginaLogin(), 405);
+
+  if (!env.SENHA_HASH || !env.SEGREDO_SESSAO) {
+    return html(paginaLogin("Servidor sem senha configurada."), 500);
+  }
+  if (!(await podeTentar(request, env))) {
+    return html(paginaLogin("Muitas tentativas. Espere um minuto."), 429);
+  }
+
+  const formulario = await request.formData();
+
+  if (!(await senhaConfere(formulario.get("senha"), env))) {
+    return html(paginaLogin("Senha incorreta."), 401);
+  }
+
+  return new Response(null, {
+    status: 303, // 303 força o navegador a trocar o POST por um GET
+    headers: { location: "/", "set-cookie": await criarSessao(env) },
+  });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    if (url.pathname !== CAMINHO) {
-      return json({ erro: "rota não encontrada" }, 404);
-    }
-    if (request.method !== "POST") {
-      return json({ erro: "use POST" }, 405);
-    }
-    if (!env.GITHUB_TOKEN) {
-      return json({ erro: "servidor sem GITHUB_TOKEN configurado" }, 500);
+    if (url.pathname === LOGIN) return entrar(request, env);
+
+    if (url.pathname === SAIR) {
+      return new Response(null, {
+        status: 303,
+        headers: { location: LOGIN, "set-cookie": encerrarSessao() },
+      });
     }
 
-    return criarReceita(request, env);
+    // Daqui para baixo, nada sai sem sessão — nem os arquivos do site. O bundle
+    // do React traz todas as receitas embutidas, então servi-lo a quem não
+    // entrou seria entregar os dados junto com a página.
+    if (!(await sessaoValida(request, env))) {
+      if (url.pathname.startsWith("/api/")) {
+        return json({ erro: "não autenticado" }, 401);
+      }
+      return new Response(null, { status: 302, headers: { location: LOGIN } });
+    }
+
+    if (url.pathname === CAMINHO) {
+      if (request.method !== "POST") return json({ erro: "use POST" }, 405);
+      if (!env.GITHUB_TOKEN) {
+        return json({ erro: "servidor sem GITHUB_TOKEN configurado" }, 500);
+      }
+      return criarReceita(request, env);
+    }
+
+    if (url.pathname.startsWith("/api/")) {
+      return json({ erro: "rota não encontrada" }, 404);
+    }
+
+    // autenticado: agora sim o arquivo estático
+    return env.ASSETS.fetch(request);
   },
 };
