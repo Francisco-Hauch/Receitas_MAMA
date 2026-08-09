@@ -1,0 +1,484 @@
+/* Receitas da Mamãe — caderno pautado.
+ *
+ * A ideia que manda em tudo: o que a mamãe escreveu fica NA PÁGINA; o que a
+ * internet sugeriu fica NA MARGEM. Por isso a única marca gráfica forte do
+ * site é a linha vermelha da margem — e por isso não existe pauta atrás do
+ * texto: linha atrás de receita atrapalha quem está cozinhando, e decoração
+ * que atrapalha o trabalho é decoração a menos.
+ */
+
+:root {
+  --papel: #eceef1;
+  --ficha: #fbfcfd;
+  --tinta: #16263f; /* azul de caneta esferográfica */
+  --tinta-fraca: #5b6a80;
+  --linha: #ccd8e6; /* pauta */
+  --margem: #b6463c; /* a linha vermelha: tudo que não é da mamãe */
+  --margem-fraca: #f0dedb;
+
+  --display: "Archivo", system-ui, sans-serif;
+  --mono: "Azeret Mono", ui-monospace, "Cascadia Mono", monospace;
+
+  --largura: 46rem;
+  --coluna-margem: 12rem;
+
+  --raio: 3px; /* quase reto: papel não tem canto redondo */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --papel: #131a24;
+    --ficha: #1a222e;
+    --tinta: #dde5ef;
+    --tinta-fraca: #93a2b8;
+    --linha: #2c3949;
+    --margem: #e4796d;
+    --margem-fraca: #3a2724;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: var(--display);
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--margem);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ---------------------------------------------------------------- cabeçalho */
+.topo {
+  border-bottom: 1px solid var(--linha);
+  background: var(--ficha);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.topo-interno {
+  max-width: var(--largura);
+  margin: 0 auto;
+  padding: 0.9rem 1.2rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+}
+
+.marca {
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* o ponto vermelho é a margem do caderno reduzida a um sinal */
+.marca::before {
+  content: "";
+  display: inline-block;
+  width: 3px;
+  height: 0.95em;
+  background: var(--margem);
+  margin-right: 0.5rem;
+  vertical-align: -0.1em;
+}
+
+.contagem {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--tinta-fraca);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ página */
+.pagina {
+  max-width: var(--largura);
+  margin: 0 auto;
+  padding: 1.5rem 1.2rem 5rem;
+}
+
+/* --------------------------------------------------------------- controles */
+.busca {
+  width: 100%;
+  font: inherit;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  background: var(--ficha);
+  color: inherit;
+}
+
+.busca::placeholder {
+  color: var(--tinta-fraca);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.9rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tag {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--linha);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--tinta-fraca);
+  cursor: pointer;
+}
+
+.tag[aria-pressed="true"] {
+  border-color: var(--tinta);
+  color: var(--ficha);
+  background: var(--tinta);
+}
+
+/* -------------------------------------------------------------- lista */
+.lista {
+  list-style: none;
+  margin: 1.6rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.entrada {
+  display: block;
+  text-decoration: none;
+  background: var(--ficha);
+  border: 1px solid var(--linha);
+  border-left: 3px solid var(--linha);
+  border-radius: var(--raio);
+  padding: 0.9rem 1rem;
+}
+
+.entrada:hover,
+.entrada:focus-visible {
+  border-left-color: var(--margem);
+}
+
+.entrada-titulo {
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: -0.015em;
+  margin: 0;
+}
+
+.entrada-meta {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--tinta-fraca);
+  margin: 0.35rem 0 0;
+}
+
+.vazio {
+  color: var(--tinta-fraca);
+  margin-top: 2rem;
+}
+
+/* -------------------------------------------------------------- receita */
+.voltar {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--tinta-fraca);
+  text-decoration: none;
+  display: inline-block;
+  margin-bottom: 1.2rem;
+}
+
+.titulo {
+  font-size: clamp(1.9rem, 6vw, 2.6rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.ficha-tecnica {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--tinta-fraca);
+  margin: 0.7rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.9rem;
+}
+
+/* valores que vieram da internet, não da receita */
+.sugerido {
+  color: var(--margem);
+}
+
+.secao {
+  margin-top: 2.4rem;
+}
+
+.secao-titulo {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--tinta-fraca);
+  border-bottom: 1px solid var(--linha);
+  padding-bottom: 0.4rem;
+  margin: 0 0 0.9rem;
+  font-weight: 500;
+}
+
+/* ---------------------------------------------------------- ingredientes */
+.ingredientes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ingrediente {
+  display: grid;
+  grid-template-columns: 4.6rem 1fr;
+  gap: 0.8rem;
+  align-items: baseline;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--linha);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  background: none;
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  font: inherit;
+  color: inherit;
+}
+
+.quantidade {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--tinta-fraca);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.ingrediente[data-usado="true"] .quantidade,
+.ingrediente[data-usado="true"] .item {
+  color: var(--tinta-fraca);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+/* ---------------------------------------------------------------- passos */
+.passos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: passo;
+}
+
+.passo {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.55rem 0 1.1rem;
+}
+
+.passo-corpo {
+  display: grid;
+  grid-template-columns: 1.8rem 1fr;
+  gap: 0.7rem;
+  align-items: start;
+  text-align: left;
+  width: 100%;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.passo-corpo::before {
+  counter-increment: passo;
+  content: counter(passo);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--margem);
+  padding-top: 0.22em;
+  font-variant-numeric: tabular-nums;
+}
+
+.passo-corpo[data-feito="true"] .passo-texto {
+  color: var(--tinta-fraca);
+}
+
+/* ------------------------------------------------------- a margem vermelha */
+.nota {
+  border-left: 2px solid var(--margem);
+  padding: 0.1rem 0 0.1rem 0.75rem;
+  margin-left: 2.5rem;
+  color: var(--tinta-fraca);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.nota-rotulo {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--margem);
+  display: block;
+  margin-bottom: 0.15rem;
+}
+
+/* No desktop a sugestão vai literalmente para a margem, ao lado do passo que
+   comenta. No celular não há margem: ela vira uma nota logo abaixo, com a
+   mesma linha vermelha para dizer a mesma coisa. */
+@media (min-width: 62rem) {
+  .pagina-receita {
+    max-width: calc(var(--largura) + var(--coluna-margem) + 2rem);
+  }
+
+  /* Tudo que não é passo precisa recuar o mesmo tanto, senão as seções não
+     se alinham entre si — só os passos usam a margem como coluna de grade. */
+  .pagina-receita .voltar,
+  .pagina-receita .titulo,
+  .pagina-receita .ficha-tecnica,
+  .pagina-receita .secao-recuada,
+  .pagina-receita .internet,
+  .pagina-receita .transcricao {
+    padding-left: calc(var(--coluna-margem) + 2rem);
+  }
+
+  .passo {
+    grid-template-columns: var(--coluna-margem) 1fr;
+    align-items: start;
+    column-gap: 2rem;
+  }
+
+  .passo-corpo {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .nota {
+    grid-column: 1;
+    grid-row: 1;
+    border-left: 0;
+    border-right: 2px solid var(--margem);
+    padding: 0.1rem 0.75rem 0.1rem 0;
+    margin-left: 0;
+    text-align: right;
+  }
+}
+
+/* ----------------------------------------------------- bloco da internet */
+.internet {
+  margin-top: 2.8rem;
+  border-top: 2px solid var(--margem);
+  padding-top: 1rem;
+}
+
+.internet-cabecalho {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.internet-titulo {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--margem);
+  margin: 0;
+  font-weight: 500;
+}
+
+.internet-aviso {
+  font-size: 0.8rem;
+  color: var(--tinta-fraca);
+  margin: 0.35rem 0 1rem;
+}
+
+.sugestoes {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--tinta-fraca);
+  font-size: 0.92rem;
+}
+
+.sugestoes li {
+  margin-bottom: 0.45rem;
+}
+
+.sugestoes li::marker {
+  color: var(--margem);
+}
+
+.fontes {
+  list-style: none;
+  margin: 1.1rem 0 0;
+  padding: 0;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.fontes li {
+  margin-bottom: 0.4rem;
+  overflow-wrap: anywhere;
+}
+
+.fontes a {
+  color: var(--tinta-fraca);
+}
+
+.nao-verificada {
+  color: var(--margem);
+  background: var(--margem-fraca);
+  padding: 0 0.3rem;
+  border-radius: var(--raio);
+  margin-right: 0.35rem;
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------- rodapé/notas */
+.transcricao {
+  margin-top: 2.8rem;
+  border-top: 1px solid var(--linha);
+  padding-top: 1rem;
+  font-size: 0.84rem;
+  color: var(--tinta-fraca);
+}
+
+.transcricao p {
+  margin: 0.4rem 0 0;
+}
