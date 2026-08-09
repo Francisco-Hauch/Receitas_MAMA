@@ -1,0 +1,39 @@
+{
+  "issue": 3,
+  "porcoes": 25,
+  "tempo_min": 15,
+  "temperatura_c": null,
+  "ingredientes_ausentes": [
+    {
+      "item": "manteiga ou óleo para untar as mãos e o prato",
+      "motivo": "Receitas equivalentes (ex.: Danielle Noce, com a mesma medida de 120g de chocolate branco) untam o prato onde a massa esfria e as mãos na hora de enrolar, para o brigadeiro não grudar."
+    },
+    {
+      "item": "forminhas de papel (papel forminha)",
+      "motivo": "Usadas para acomodar os brigadeiros depois de enrolados e passados no granulado branco, evitando que grudem uns nos outros."
+    }
+  ],
+  "passos_detalhados": [
+    {
+      "indice": 4,
+      "detalhe": "O ponto de enrolar pode ser conferido inclinando a espátula no fundo da panela: a massa deve se abrir ao meio e a abertura não se fechar sozinha ('ponto Moisés'), além de se soltar das laterais. Costuma levar entre 12 e 18 minutos em fogo baixo a médio, variando conforme a panela e o fogão."
+    },
+    {
+      "indice": 7,
+      "detalhe": "Depois de esfriar em temperatura ambiente, leve à geladeira por pelo menos 2 horas antes de moldar as bolinhas — isso firma a massa o suficiente para enrolar sem grudar nas mãos."
+    }
+  ],
+  "dicas": [
+    "Para enrolar sem grudar nas mãos, unte-as com um pouco de manteiga ou óleo antes de moldar as bolinhas.",
+    "Chocolate branco derrete e queima mais facilmente que o chocolate ao leite/meio amargo, então mantenha o fogo baixo e mexa sem parar ao formar a ganache.",
+    "Guarde os brigadeiros prontos em pote fechado na geladeira; as fontes divergem sobre a validade (de 2-3 dias a 5-7 dias), então é mais seguro consumir em até 3-4 dias."
+  ],
+  "fontes": [
+    {
+      "url": "https://www.daninoce.com.br/receitas/brigadeiro-de-chocolate-branco/",
+      "titulo": "Brigadeiro de Chocolate Branco - Danielle Noce",
+      "aviso": null
+    }
+  ],
+  "confianca": 0.65
+}

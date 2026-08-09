@@ -1,0 +1,50 @@
+{
+  "issue": 3,
+  "titulo": "Brigadeiro de Chocolate Branco",
+  "porcoes": null,
+  "tempo_min": null,
+  "ingredientes": [
+    {
+      "bruto": "1 lata de leite condensado",
+      "item": "leite condensado",
+      "qtd": 395.0,
+      "unidade": "g"
+    },
+    {
+      "bruto": "1/2 lata de creme de leite sem soro",
+      "item": "creme de leite sem soro",
+      "qtd": 100.0,
+      "unidade": "g"
+    },
+    {
+      "bruto": "120 gramas de chocolate branco",
+      "item": "chocolate branco",
+      "qtd": 120.0,
+      "unidade": "g"
+    },
+    {
+      "bruto": "Granulado branco para finalizar",
+      "item": "granulado branco",
+      "qtd": null,
+      "unidade": null
+    }
+  ],
+  "passos": [
+    "Separe os ingredientes na bancada para agilizar o preparo",
+    "Quebre o chocolate branco em pedaços menores para facilitar na hora de derreter na panela",
+    "Em uma panela, em fogo baixo, coloque o chocolate branco e o creme de leite para formar uma ganache",
+    "Misture com a ajuda de um fouet (batedor de arame) até obter uma mistura homogênea",
+    "Adicione o leite condensado e mexa constantemente, ainda em fogo baixo, até desgrudar do fundo da panela",
+    "Desligue o fogo e mexa por mais 3 minutos para o brigadeiro ficar mais brilhante",
+    "Transfira para um recipiente e cubra com um plástico diretamente em contato com o brigadeiro para evitar a formação de película",
+    "Deixe esfriar completamente para firmar"
+  ],
+  "tags": [
+    "doce",
+    "sobremesa",
+    "brigadeiro",
+    "chocolate branco"
+  ],
+  "notas": "As fotos mostram apenas o preparo da ganache/brigadeiro até firmar; não há instruções sobre enrolar em bolinhas ou como aplicar o granulado branco de finalização.",
+  "confianca": 0.95
+}
