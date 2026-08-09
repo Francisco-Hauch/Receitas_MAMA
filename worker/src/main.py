@@ -6,6 +6,7 @@ Uso, a partir da raiz do projeto (ou via worker\\executar.cmd):
     python -m worker.src.main --processar   # transcreve, grava e fecha a issue
     python -m worker.src.main --enriquecer  # o mesmo + busca na web o que falta
     python -m worker.src.main --simular     # roda tudo sem gravar nem mexer nas issues
+    python -m worker.src.main --processar --sem-commit   # grava, mas não publica
 
 A ORDEM das operações em processar() é o que torna uma queda no meio segura:
 
@@ -26,7 +27,7 @@ import json
 
 from pydantic import ValidationError
 
-from . import armazenar, claude, enriquecer, github
+from . import armazenar, claude, enriquecer, github, versionar
 from .config import carregar
 from .github import GitHub
 from .modelos import Complemento, Receita
@@ -123,7 +124,7 @@ def processar(
     fila: list[dict],
     enriquecer_tambem: bool = False,
     simular: bool = False,
-) -> None:
+) -> tuple[dict[int, Receita], int]:
     itens = [issue_para_item(i) for i in fila]
 
     # Sem conteúdo não há o que fazer — evita gastar chamada à toa.
@@ -187,15 +188,19 @@ def processar(
                 gh.comentar(n, f"Não foi possível processar:\n\n> {motivo}")
         print()
 
+    complementos = 0
     if enriquecer_tambem and gravadas:
-        complementar(gravadas, simular)
+        complementos = complementar(gravadas, simular)
+
+    return gravadas, complementos
 
 
-def complementar(gravadas: dict[int, Receita], simular: bool = False) -> None:
+def complementar(gravadas: dict[int, Receita], simular: bool = False) -> int:
     """Passada 2. Falhar aqui NÃO invalida a receita: ela já está gravada."""
     print("\n=== passada 2: pesquisando complementos na web ===\n")
 
     receitas = list(gravadas.values())
+    salvos = 0
 
     for numero_lote, lote in enumerate(
         claude.em_lotes(receitas, enriquecer.TAMANHO_LOTE), start=1
@@ -239,9 +244,12 @@ def complementar(gravadas: dict[int, Receita], simular: bool = False) -> None:
                 continue
 
             caminho = armazenar.salvar_complemento(comp, receita.titulo)
+            salvos += 1
             print(f"    #{comp.issue}: {caminho.name} "
                   f"({len(comp.fontes)} fonte(s), confiança {comp.confianca:.2f})")
         print()
+
+    return salvos
 
 
 def main() -> None:
@@ -252,6 +260,8 @@ def main() -> None:
                     help="segunda passada: pesquisa na web o que falta (mais lento)")
     ap.add_argument("--simular", action="store_true",
                     help="mostra o resultado sem gravar nada nem mexer nas issues")
+    ap.add_argument("--sem-commit", action="store_true",
+                    help="grava os arquivos mas não commita nem empurra")
     args = ap.parse_args()
 
     cfg = carregar()
@@ -270,11 +280,26 @@ def main() -> None:
     if not fila:
         return
 
-    if args.processar or args.enriquecer or args.simular:
-        processar(gh, fila, enriquecer_tambem=args.enriquecer, simular=args.simular)
-    else:
+    if not (args.processar or args.enriquecer or args.simular):
         listar(fila)
         print("\n(use --processar para gravar, ou --simular para só ver)")
+        return
+
+    gravadas, complementos = processar(
+        gh, fila, enriquecer_tambem=args.enriquecer, simular=args.simular
+    )
+
+    if args.simular or args.sem_commit or not gravadas:
+        return
+
+    try:
+        resumo = versionar.resumo_commit(list(gravadas), complementos)
+        commit = versionar.publicar(resumo)
+        print(f"Publicado: {commit}" if commit else "Nada novo em data/ para publicar.")
+    except versionar.ErroGit as e:
+        # os arquivos estão em disco e as issues já foram fechadas; só o envio
+        # falhou, e isso o próximo `git push` seu resolve
+        print(f"AVISO: não consegui publicar no git -> {e}")
 
 
 if __name__ == "__main__":
