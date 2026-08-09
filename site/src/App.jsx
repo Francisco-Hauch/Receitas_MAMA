@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import Enviar from "./Enviar.jsx";
 import Lista from "./Lista.jsx";
 import Receita from "./Receita.jsx";
 import { acharReceita, receitas } from "./dados.js";
@@ -25,7 +26,8 @@ function useRota() {
 
 export default function App() {
   const rota = useRota();
-  const receita = rota ? acharReceita(rota) : null;
+  const enviando = rota === "enviar";
+  const receita = rota && !enviando ? acharReceita(rota) : null;
 
   // ao abrir uma receita, começa do topo — senão o leitor cai no meio
   useEffect(() => {
@@ -39,14 +41,16 @@ export default function App() {
           <a className="marca" href="#/">
             Receitas da Mamãe
           </a>
-          <span className="contagem">
-            {receitas.length} {receitas.length === 1 ? "receita" : "receitas"}
-          </span>
+          <a className="contagem" href="#/enviar">
+            mandar receita
+          </a>
         </div>
       </header>
 
       <main className={receita ? "pagina pagina-receita" : "pagina"}>
-        {rota && !receita ? (
+        {enviando ? (
+          <Enviar />
+        ) : rota && !receita ? (
           <>
             <a className="voltar" href="#/">
               ← todas as receitas

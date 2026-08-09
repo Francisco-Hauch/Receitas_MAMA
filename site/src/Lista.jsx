@@ -55,7 +55,9 @@ export default function Lista() {
                 <h2 className="entrada-titulo">{r.titulo}</h2>
                 <p className="entrada-meta">
                   {r.ingredientes.length} ingredientes · {r.passos.length} passos
-                  {r.tags.length > 0 && ` · ${r.tags.join(" ")}`}
+                  {/* vírgula, não espaço: existe tag com espaço no meio
+                      ("chocolate branco") e coladas elas viram uma frase */}
+                  {r.tags.length > 0 && ` · ${r.tags.join(", ")}`}
                 </p>
               </a>
             </li>

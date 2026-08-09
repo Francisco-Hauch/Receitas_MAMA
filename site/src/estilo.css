@@ -470,6 +470,69 @@ a {
   white-space: nowrap;
 }
 
+/* ------------------------------------------------------------ formulário */
+.formulario {
+  margin-top: 1.8rem;
+  display: grid;
+  gap: 1.6rem;
+}
+
+.campo {
+  display: grid;
+  gap: 0.45rem;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0; /* fieldset não encolhe sozinho dentro de grid */
+}
+
+.campo .secao-titulo {
+  margin: 0;
+}
+
+textarea.busca {
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.6;
+}
+
+input[type="file"].busca {
+  padding: 0.55rem;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+}
+
+.dica {
+  font-size: 0.82rem;
+  color: var(--tinta-fraca);
+}
+
+.aviso-erro {
+  margin: 0;
+  border-left: 2px solid var(--margem);
+  padding-left: 0.75rem;
+  color: var(--margem);
+  font-size: 0.9rem;
+}
+
+.enviar {
+  font: inherit;
+  font-weight: 700;
+  padding: 0.75rem 1.1rem;
+  border: 0;
+  border-radius: var(--raio);
+  background: var(--tinta);
+  color: var(--ficha);
+  cursor: pointer;
+  justify-self: start;
+}
+
+.enviar:disabled {
+  background: var(--linha);
+  color: var(--tinta-fraca);
+  cursor: not-allowed;
+}
+
 /* --------------------------------------------------------- rodapé/notas */
 .transcricao {
   margin-top: 2.8rem;
