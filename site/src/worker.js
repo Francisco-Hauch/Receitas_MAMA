@@ -182,6 +182,23 @@ const html = (corpo, status = 200, cabecalhos = {}) =>
     headers: { "content-type": "text/html; charset=utf-8", ...cabecalhos },
   });
 
+/**
+ * Atraso fixo em toda tentativa de senha errada.
+ *
+ * MEDIDO EM PRODUÇÃO: o binding de rate limit conta por máquina do Cloudflare,
+ * não globalmente. Em 15 tentativas seguidas ele barrou uma; em 10 paralelas,
+ * três. É amortecedor, não tranca.
+ *
+ * Este atraso não depende de contador nenhum: cada tentativa errada segura a
+ * conexão por um segundo, e isso vale em qualquer máquina. Não custa CPU (a
+ * Cloudflare cobra CPU, não tempo de parede), então cabe no plano grátis.
+ *
+ * Nada disso substitui a senha ser longa. Uma frase de quatro palavras torna a
+ * força bruta inviável mesmo sem freio nenhum; uma senha curta cai apesar dele.
+ */
+const ATRASO_ERRO = 1000;
+const esperar = (ms) => new Promise((pronto) => setTimeout(pronto, ms));
+
 /** Quantas tentativas de senha esta origem ainda pode gastar. */
 async function podeTentar(request, env) {
   // Sem o binding configurado, recusa: um login sem freio de tentativa é pior
@@ -209,7 +226,10 @@ async function entrar(request, env) {
   const formulario = await request.formData();
   const nivel = await nivelDaSenha(formulario.get("senha"), env);
 
-  if (!nivel) return html(paginaLogin("Senha incorreta."), 401);
+  if (!nivel) {
+    await esperar(ATRASO_ERRO);
+    return html(paginaLogin("Senha incorreta."), 401);
+  }
 
   return new Response(null, {
     status: 303, // 303 força o navegador a trocar o POST por um GET

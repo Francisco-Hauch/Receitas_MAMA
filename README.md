@@ -138,16 +138,24 @@ O cookie é `nivel.validade.HMAC(nivel.validade)`, com `HttpOnly`, `Secure`,
 Senha e assinatura são comparadas byte a byte sem sair mais cedo na primeira
 diferença, para não vazar informação pelo tempo de resposta.
 
-### 6. Limite de tentativas
+### 6. Freio nas tentativas de senha
 
-Dois freios nativos da Cloudflare, em `wrangler.jsonc`:
+Dois bindings de rate limit em `wrangler.jsonc` (`LIMITE_LOGIN`, 5/min por
+origem; `LIMITE_GLOBAL`, 30/min no total) **mais** um atraso fixo de 1 segundo
+em cada tentativa errada. Se o binding não existir, o login recusa em vez de
+seguir sem freio.
 
-| binding | limite | contra |
-|---|---|---|
-| `LIMITE_LOGIN` | 5 por minuto, por origem | alguém insistindo |
-| `LIMITE_GLOBAL` | 30 por minuto, no total | muitas origens tentando pouco cada |
-
-Se o binding não existir, o login **recusa** em vez de seguir sem freio.
+> **O que foi medido em produção.** O contador do rate limit da Cloudflare vive
+> na máquina que atendeu a requisição, não é global. Em 15 tentativas seguidas
+> ele barrou uma; em 10 paralelas, três. **É amortecedor, não tranca** — o
+> limite efetivo é 5/min *por máquina*, e ninguém controla quantas atendem.
+>
+> O atraso de 1 segundo é o que não depende de contador: vale em qualquer
+> máquina e não custa CPU (a Cloudflare cobra CPU, não tempo de parede).
+>
+> Nada disso substitui a senha ser longa. **Uma frase de quatro palavras torna
+> a força bruta inviável mesmo sem freio nenhum; uma senha curta cai apesar
+> dele.** A senha é a defesa principal — o resto é margem.
 
 ### 7. Falha fechada, sempre
 
