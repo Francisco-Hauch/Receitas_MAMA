@@ -1,0 +1,54 @@
+{
+  "issue": 1,
+  "porcoes": null,
+  "tempo_min": null,
+  "temperatura_c": null,
+  "ingredientes_ausentes": [
+    {
+      "item": "orégano",
+      "motivo": "Praticamente todas as receitas semelhantes (manteiga + maionese + parmesão + alho) encontradas na busca incluem orégano, seco ou polvilhado por cima antes de assar."
+    }
+  ],
+  "passos_detalhados": [
+    {
+      "indice": 0,
+      "detalhe": "Processar o alho (em vez de só amassar) deixa a pasta mais homogênea e libera mais aroma; pedaços grandes de alho tendem a queimar e amargar no forno."
+    },
+    {
+      "indice": 1,
+      "detalhe": "A manteiga precisa estar realmente em temperatura ambiente (macia, não derretida) para incorporar sem empelotar com o alho."
+    },
+    {
+      "indice": 6,
+      "detalhe": "O ponto está pronto quando a manteiga borbulha nas bordas e a superfície fica dourada; fique perto do forno nos últimos minutos, pois o alho passa rápido de dourado a queimado."
+    }
+  ],
+  "dicas": [
+    "A pasta pronta (antes de assar) se conserva na geladeira por cerca de uma semana em pote fechado.",
+    "Pode ser congelada em porções e usada direto do freezer, passando no pão ainda semicongelada.",
+    "Provar e ajustar o alho aos poucos rende um resultado mais equilibrado do que colocar tudo de uma vez."
+  ],
+  "fontes": [
+    {
+      "url": "https://www.receitadevovo.com.br/receitas/pasta-de-alho-para-pao",
+      "titulo": "Pasta de alho para pão - Receita de Vovó",
+      "aviso": null
+    },
+    {
+      "url": "https://www.tudogostoso.com.br/receita/111449-pasta-de-alho-para-churrasco.html",
+      "titulo": "Receita de Pasta de alho para churrasco - TudoGostoso",
+      "aviso": null
+    },
+    {
+      "url": "https://comidinhasdochef.com/pasta-de-alho-com-maionese/",
+      "titulo": "Pasta de Alho com Maionese - Comidinhas do Chef",
+      "aviso": "HTTP 403 (não verificável)"
+    },
+    {
+      "url": "https://www.tupi.fm/receitas/misture-maionese-alho-manteiga-e-queijo-e-faca-um-pao-de-alho-caseiro-cremoso-e-delicioso/",
+      "titulo": "Misture maionese, alho, manteiga e queijo e faça um pão de alho caseiro cremoso e delicioso - Super Rádio Tupi",
+      "aviso": "HTTP 403 (não verificável)"
+    }
+  ],
+  "confianca": 0.7
+}

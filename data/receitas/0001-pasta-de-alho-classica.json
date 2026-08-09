@@ -1,0 +1,68 @@
+{
+  "issue": 1,
+  "titulo": "Pasta de Alho Clássica",
+  "porcoes": null,
+  "tempo_min": null,
+  "ingredientes": [
+    {
+      "bruto": "4 dentes de alho",
+      "item": "alho",
+      "qtd": 4.0,
+      "unidade": "unidade"
+    },
+    {
+      "bruto": "3 colheres de sopa de manteiga em temperatura ambiente",
+      "item": "manteiga",
+      "qtd": 45.0,
+      "unidade": "g"
+    },
+    {
+      "bruto": "2 colheres de sopa de maionese",
+      "item": "maionese",
+      "qtd": 30.0,
+      "unidade": "g"
+    },
+    {
+      "bruto": "2 colheres de sopa de queijo parmesão ralado",
+      "item": "queijo parmesão ralado",
+      "qtd": 20.0,
+      "unidade": "g"
+    },
+    {
+      "bruto": "1 colher de sopa de salsinha picada",
+      "item": "salsinha picada",
+      "qtd": 4.0,
+      "unidade": "g"
+    },
+    {
+      "bruto": "Sal a gosto",
+      "item": "sal",
+      "qtd": null,
+      "unidade": null
+    },
+    {
+      "bruto": "Pimenta-do-reino (opcional)",
+      "item": "pimenta-do-reino",
+      "qtd": null,
+      "unidade": null
+    }
+  ],
+  "passos": [
+    "Amasse ou processe bem o alho.",
+    "Misture o alho com a manteiga até formar um creme.",
+    "Acrescente a maionese e o parmesão.",
+    "Adicione a salsinha, o sal e a pimenta.",
+    "Misture até ficar homogêneo.",
+    "Passe generosamente nos pães.",
+    "Asse em forno preaquecido a 200°C por 10 a 15 minutos, ou até dourar."
+  ],
+  "tags": [
+    "pasta",
+    "alho",
+    "molho",
+    "acompanhamento",
+    "assado"
+  ],
+  "notas": "Texto original claro, sem trechos ilegíveis. Título mantido como 'Pasta de Alho Clássica' (nome dado no próprio texto), já que a receita é a pasta usada para fazer o pão de alho, não o pão em si. Quantidades em gramas de manteiga, maionese, parmesão e salsinha foram estimadas a partir de conversões usuais de 'colher de sopa' (não informadas no original), por isso a confiança foi reduzida. Tempo de preparo total e número de porções não foram informados e por isso foram omitidos.",
+  "confianca": 0.85
+}
