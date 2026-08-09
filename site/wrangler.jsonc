@@ -1,0 +1,19 @@
+{
+  // Configuração do deploy na Cloudflare.
+  //
+  // Não existe "main" aqui de propósito: este Worker não roda código nenhum,
+  // só entrega arquivos estáticos. A Cloudflare chama isso de "assets-only".
+  //
+  // Por que Workers e não Pages: a Cloudflare declarou que todo investimento
+  // novo vai para Workers, e o Pages ficou em manutenção. Para projeto novo,
+  // Workers é a recomendação deles.
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "receitas-mamae",
+  "compatibility_date": "2026-08-09",
+  "assets": {
+    "directory": "./dist/",
+    // O site roteia pelo # da URL, então só "/" é pedido de verdade. Isso aqui
+    // garante que qualquer outro caminho caia no index em vez de dar 404.
+    "not_found_handling": "single-page-application"
+  }
+}
