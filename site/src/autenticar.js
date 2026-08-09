@@ -96,6 +96,22 @@ export async function sessaoValida(request, env) {
  * navegador precisaria baixar o bundle para desenhá-la — e o bundle tem todas
  * as receitas embutidas. Ninguém não autenticado pode receber aquele arquivo.
  */
+/**
+ * Escapa texto antes de virar HTML.
+ *
+ * Hoje todas as mensagens de erro são literais definidas no worker.js, então
+ * nada aqui é atacável. Isto existe para o dia em que alguém passar
+ * `paginaLogin(e.message)` ou um valor vindo da URL: a função fica segura por
+ * construção, em vez de depender de quem a chama lembrar do cuidado.
+ */
+const escapar = (texto) =>
+  String(texto)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
 export function paginaLogin(erro = "") {
   return `<!doctype html>
 <html lang="pt-BR">
@@ -138,7 +154,7 @@ export function paginaLogin(erro = "") {
     <input id="senha" name="senha" type="password" autocomplete="current-password"
            autofocus required>
     <button type="submit">Entrar</button>
-    ${erro ? `<p>${erro}</p>` : ""}
+    ${erro ? `<p>${escapar(erro)}</p>` : ""}
   </form>
 </body>
 </html>`;
