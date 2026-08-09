@@ -4,6 +4,7 @@ import Enviar from "./Enviar.jsx";
 import Lista from "./Lista.jsx";
 import Receita from "./Receita.jsx";
 import { acharReceita, receitas } from "./dados.js";
+import { useSessao } from "./sessao.js";
 
 /**
  * Rotas pelo hash da URL (#/0001-pao-de-alho).
@@ -26,6 +27,7 @@ function useRota() {
 
 export default function App() {
   const rota = useRota();
+  const { sessao, podeEnviar } = useSessao();
   const enviando = rota === "enviar";
   const receita = rota && !enviando ? acharReceita(rota) : null;
 
@@ -41,15 +43,36 @@ export default function App() {
           <a className="marca" href="#/">
             Receitas da Mamãe
           </a>
-          <a className="contagem" href="#/enviar">
-            mandar receita
-          </a>
+          <span className="contagem">
+            {podeEnviar && (
+              <a href="#/enviar">mandar receita</a>
+            )}
+            {sessao?.rotulo && (
+              <>
+                {podeEnviar && " · "}
+                {sessao.rotulo} · <a href="/sair">sair</a>
+              </>
+            )}
+          </span>
         </div>
       </header>
 
       <main className={receita ? "pagina pagina-receita" : "pagina"}>
         {enviando ? (
-          <Enviar />
+          podeEnviar ? (
+            <Enviar />
+          ) : (
+            <>
+              <a className="voltar" href="#/">
+                ← todas as receitas
+              </a>
+              <h1 className="titulo">Só leitura</h1>
+              <p className="vazio">
+                Este acesso vê as receitas, mas não manda novas. Entre com a
+                senha da família para mandar.
+              </p>
+            </>
+          )
         ) : rota && !receita ? (
           <>
             <a className="voltar" href="#/">

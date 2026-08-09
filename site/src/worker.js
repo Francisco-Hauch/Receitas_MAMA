@@ -13,14 +13,18 @@
  */
 
 import {
+  NIVEIS,
   criarSessao,
   encerrarSessao,
+  nivelDaSenha,
+  nivelDaSessao,
   paginaLogin,
-  senhaConfere,
-  sessaoValida,
+  podeFazer,
+  temAlgumaSenha,
 } from "./autenticar.js";
 
 const CAMINHO = "/api/receita";
+const SESSAO = "/api/sessao";
 const LOGIN = "/entrar";
 const SAIR = "/sair";
 
@@ -195,7 +199,7 @@ async function entrar(request, env) {
   if (request.method === "GET") return html(paginaLogin());
   if (request.method !== "POST") return html(paginaLogin(), 405);
 
-  if (!env.SENHA_HASH || !env.SEGREDO_SESSAO) {
+  if (!temAlgumaSenha(env) || !env.SEGREDO_SESSAO) {
     return html(paginaLogin("Servidor sem senha configurada."), 500);
   }
   if (!(await podeTentar(request, env))) {
@@ -203,14 +207,13 @@ async function entrar(request, env) {
   }
 
   const formulario = await request.formData();
+  const nivel = await nivelDaSenha(formulario.get("senha"), env);
 
-  if (!(await senhaConfere(formulario.get("senha"), env))) {
-    return html(paginaLogin("Senha incorreta."), 401);
-  }
+  if (!nivel) return html(paginaLogin("Senha incorreta."), 401);
 
   return new Response(null, {
     status: 303, // 303 força o navegador a trocar o POST por um GET
-    headers: { location: "/", "set-cookie": await criarSessao(env) },
+    headers: { location: "/", "set-cookie": await criarSessao(nivel, env) },
   });
 }
 
@@ -230,15 +233,27 @@ export default {
     // Daqui para baixo, nada sai sem sessão — nem os arquivos do site. O bundle
     // do React traz todas as receitas embutidas, então servi-lo a quem não
     // entrou seria entregar os dados junto com a página.
-    if (!(await sessaoValida(request, env))) {
+    const nivel = await nivelDaSessao(request, env);
+
+    if (!nivel) {
       if (url.pathname.startsWith("/api/")) {
         return json({ erro: "não autenticado" }, 401);
       }
       return new Response(null, { status: 302, headers: { location: LOGIN } });
     }
 
+    // O site pergunta aqui o que pode mostrar. Isto é conveniência de tela:
+    // esconder um botão não protege nada, e quem decide de verdade é a checagem
+    // logo abaixo, no servidor.
+    if (url.pathname === SESSAO) {
+      return json({ nivel, rotulo: NIVEIS[nivel].rotulo, pode: NIVEIS[nivel].pode });
+    }
+
     if (url.pathname === CAMINHO) {
       if (request.method !== "POST") return json({ erro: "use POST" }, 405);
+      if (!podeFazer(nivel, "enviar")) {
+        return json({ erro: "seu acesso é só de leitura" }, 403);
+      }
       if (!env.GITHUB_TOKEN) {
         return json({ erro: "servidor sem GITHUB_TOKEN configurado" }, 500);
       }

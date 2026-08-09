@@ -52,7 +52,11 @@
   }
 
   // NÃO ficam aqui, são secrets no painel (Settings → Variables and Secrets):
-  //   GITHUB_TOKEN     token do GitHub
-  //   SENHA_HASH       SHA-256 da senha da família
-  //   SEGREDO_SESSAO   string aleatória que assina o cookie
+  //   GITHUB_TOKEN         token do GitHub
+  //   SEGREDO_SESSAO       string aleatória que assina o cookie
+  //   SENHA_FAMILIA_HASH   SHA-256 da senha de quem vê E manda receitas
+  //   SENHA_VISITA_HASH    SHA-256 da senha de quem só vê (opcional)
+  //
+  // SENHA_HASH (a senha única de antes) continua valendo como "familia", para
+  // não trancar ninguém do lado de fora durante a troca.
 }

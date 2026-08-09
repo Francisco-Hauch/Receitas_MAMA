@@ -25,6 +25,34 @@
 const COOKIE = "sessao";
 const DURACAO = 60 * 60 * 24 * 30; // 30 dias — é um caderno de receitas
 
+/**
+ * Níveis de acesso, cada um com sua senha.
+ *
+ * O corte entre eles não é arbitrário: "enviar" é a permissão que escreve no
+ * repositório privado (cria issue e commita foto). Quem só quer a receita para
+ * cozinhar não precisa dela, e quem não precisa não deve ter.
+ *
+ * Para criar um nível novo: uma linha aqui e um secret novo no painel.
+ */
+export const NIVEIS = {
+  familia: {
+    rotulo: "família",
+    segredo: "SENHA_FAMILIA_HASH",
+    pode: ["ver", "enviar"],
+  },
+  visita: {
+    rotulo: "visita",
+    segredo: "SENHA_VISITA_HASH",
+    pode: ["ver"],
+  },
+};
+
+/** O nível antigo, de quando havia uma senha só. Vale como "familia". */
+const SEGREDO_ANTIGO = "SENHA_HASH";
+
+export const podeFazer = (nivel, acao) =>
+  Boolean(NIVEIS[nivel]?.pode.includes(acao));
+
 const codificador = new TextEncoder();
 
 const hex = (buffer) =>
@@ -55,38 +83,64 @@ async function assinar(mensagem, segredo) {
   return hex(await crypto.subtle.sign("HMAC", chave, codificador.encode(mensagem)));
 }
 
-export async function senhaConfere(senha, env) {
-  if (!senha || !env.SENHA_HASH) return false;
-  return iguais(await sha256(senha), env.SENHA_HASH.trim().toLowerCase());
+/** Descobre a que nível a senha digitada corresponde. null = nenhuma. */
+export async function nivelDaSenha(senha, env) {
+  if (!senha) return null;
+
+  const digitada = await sha256(senha);
+  const confere = (guardado) =>
+    guardado && iguais(digitada, guardado.trim().toLowerCase());
+
+  for (const [nivel, config] of Object.entries(NIVEIS)) {
+    if (confere(env[config.segredo])) return nivel;
+  }
+
+  // compatibilidade: quem já tinha SENHA_HASH configurado não fica de fora
+  if (confere(env[SEGREDO_ANTIGO])) return "familia";
+
+  return null;
 }
 
-export async function criarSessao(env) {
+export function temAlgumaSenha(env) {
+  return Boolean(
+    env[SEGREDO_ANTIGO] ||
+      Object.values(NIVEIS).some((config) => env[config.segredo]),
+  );
+}
+
+export async function criarSessao(nivel, env) {
   const expira = String(Math.floor(Date.now() / 1000) + DURACAO);
-  const assinatura = await assinar(expira, env.SEGREDO_SESSAO);
-  return `${COOKIE}=${expira}.${assinatura}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${DURACAO}`;
+  // o nível vai DENTRO do que é assinado: trocar "visita" por "familia" no
+  // cookie invalida a assinatura
+  const conteudo = `${nivel}.${expira}`;
+  const assinatura = await assinar(conteudo, env.SEGREDO_SESSAO);
+  return `${COOKIE}=${conteudo}.${assinatura}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${DURACAO}`;
 }
 
 export const encerrarSessao = () =>
   `${COOKIE}=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0`;
 
-export async function sessaoValida(request, env) {
-  if (!env.SEGREDO_SESSAO) return false;
+/** Devolve o nível da sessão, ou null se não houver sessão boa. */
+export async function nivelDaSessao(request, env) {
+  if (!env.SEGREDO_SESSAO) return null;
 
   const bruto = request.headers.get("cookie") || "";
   const achado = bruto
     .split(";")
     .map((p) => p.trim())
     .find((p) => p.startsWith(`${COOKIE}=`));
-  if (!achado) return false;
+  if (!achado) return null;
 
-  const [expira, assinatura] = achado.slice(COOKIE.length + 1).split(".");
-  if (!expira || !assinatura) return false;
+  const [nivel, expira, assinatura] = achado.slice(COOKIE.length + 1).split(".");
+  if (!nivel || !expira || !assinatura) return null;
+  if (!Object.hasOwn(NIVEIS, nivel)) return null;
 
-  // a validade é verificada DEPOIS da assinatura: sem assinatura boa, o valor
-  // de "expira" não é confiável para nada
-  if (!iguais(await assinar(expira, env.SEGREDO_SESSAO), assinatura)) return false;
+  // a validade é verificada DEPOIS da assinatura: sem assinatura boa, nem o
+  // nível nem a data valem nada
+  const esperada = await assinar(`${nivel}.${expira}`, env.SEGREDO_SESSAO);
+  if (!iguais(esperada, assinatura)) return null;
 
-  return Number(expira) > Math.floor(Date.now() / 1000);
+  return Number(expira) > Math.floor(Date.now() / 1000) ? nivel : null;
 }
 
 /**
