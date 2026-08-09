@@ -6,7 +6,10 @@
   // que permitiu o formulário do site — o mesmo Worker que entrega os arquivos
   // agora também atende /api/receita, sem trocar de plataforma.
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "receitas-mamae",
+  // Tem que ser IDÊNTICO ao nome do Worker no painel da Cloudflare, senão o
+  // deploy cria um segundo Worker em vez de atualizar este. O painel gerou
+  // "receitas-mama" (sem o "e"), e quem manda é ele.
+  "name": "receitas-mama",
   "compatibility_date": "2026-08-09",
   "main": "./src/worker.js",
   "assets": {
