@@ -25,6 +25,7 @@ que torna isso possível — o contrário perderia trabalho.
 import argparse
 import json
 
+import requests
 from pydantic import ValidationError
 
 from . import armazenar, claude, enriquecer, github, versionar
@@ -53,27 +54,47 @@ def issue_para_item(issue: dict) -> dict:
     }
 
 
-def preparar_foto(item: dict) -> tuple[dict | None, str | None]:
-    """Troca os nomes de arquivo da issue pelos caminhos reais das imagens.
+def preparar_foto(gh: GitHub, item: dict) -> tuple[dict | None, str | None]:
+    """Põe as imagens da issue em disco e devolve os caminhos.
+
+    Dois caminhos, nesta ordem:
+      1. anexo arrastado para dentro da issue (o gesto natural) — baixado aqui;
+      2. nome de arquivo já presente em data/fotos/, para reprocessar sem
+         depender do anexo continuar existindo.
 
     Devolve (item pronto, None) ou (None, motivo da recusa). Recusar aqui é
     barato; recusar depois de gastar a chamada não é.
     """
+    numero = item["issue"]
+
+    try:
+        urls = gh.anexos(numero)
+    except requests.RequestException as e:
+        return None, f"não consegui ler os anexos da issue: {e}"
+
+    caminhos = []
+    for indice, url in enumerate(urls, start=1):
+        try:
+            dados, extensao = gh.baixar(url)
+        except requests.RequestException as e:
+            return None, f"não consegui baixar a imagem {indice}: {e}"
+        caminhos.append(armazenar.salvar_foto(numero, indice, dados, extensao))
+
+    if caminhos:
+        return {**item, "arquivos": caminhos}, None
+
+    # sem anexo: talvez a pessoa tenha escrito o nome de um arquivo já subido
     encontradas, faltando = armazenar.achar_fotos(item["conteudo"])
+    if encontradas and not faltando:
+        return {**item, "arquivos": encontradas}, None
 
     if faltando:
-        return None, (
-            f"não achei em `data/fotos/`: {', '.join(faltando)}. "
-            "Suba a imagem no repositório (Add file → Upload files) e escreva "
-            "só o nome do arquivo no campo Conteúdo."
-        )
-    if not encontradas:
-        return None, (
-            "o campo Conteúdo não tinha nome de arquivo nenhum. Para receita "
-            "por foto, suba a imagem em `data/fotos/` e escreva o nome dela aqui."
-        )
+        return None, f"não achei em `data/fotos/`: {', '.join(faltando)}"
 
-    return {**item, "arquivos": encontradas}, None
+    return None, (
+        "não encontrei imagem nenhuma nesta issue. Arraste a foto para dentro "
+        "do campo Conteúdo e salve."
+    )
 
 
 def listar(fila: list[dict]) -> None:
@@ -164,7 +185,7 @@ def processar(
             textos.append(item)
             continue
 
-        pronto, motivo = preparar_foto(item)
+        pronto, motivo = preparar_foto(gh, item)
         if pronto:
             fotos.append(pronto)
         else:

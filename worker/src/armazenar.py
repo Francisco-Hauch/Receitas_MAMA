@@ -86,6 +86,18 @@ def salvar_bruto(item: dict) -> Path:
     )
 
 
+def salvar_foto(issue: int, indice: int, dados: bytes, extensao: str) -> Path:
+    """Guarda uma foto anexada à issue. O nome traz a issue, como os JSONs.
+
+    A foto fica no repositório de propósito: é o "bruto" das receitas que vieram
+    por imagem. Sem ela, melhorar o prompt depois exigiria pedir a foto de novo.
+    """
+    FOTOS.mkdir(parents=True, exist_ok=True)
+    destino = FOTOS / f"{issue:04d}-{indice}{extensao}"
+    destino.write_bytes(dados)
+    return destino
+
+
 def achar_fotos(conteudo: str) -> tuple[list[Path], list[str]]:
     """Resolve os nomes escritos na issue para caminhos em data/fotos/.
 
