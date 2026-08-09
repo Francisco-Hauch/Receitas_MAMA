@@ -74,6 +74,36 @@ def ha_novidade() -> bool:
     return bool(resultado.stdout.strip())
 
 
+def sincronizar() -> str:
+    """Traz o que chegou pelo site do GitHub antes de processar.
+
+    Existe por causa das fotos: você sobe a imagem em data/fotos/ pelo navegador
+    do celular, o que cria um commit direto no remoto. Sem este passo o worker
+    procuraria no disco um arquivo que só existe no GitHub.
+
+    O autostash guarda mudanças locais antes do rebase e devolve depois — sem
+    ele, qualquer arquivo modificado faria o rebase recusar e o worker parar por
+    um motivo que ninguém está olhando às 3 da manhã.
+    """
+    ramo = ramo_atual()
+    if not ramo:
+        raise ErroGit("HEAD solto (detached): recuso sincronizar")
+
+    _git("fetch", "origin", ramo)
+
+    rebase = _git(
+        "-c", "rebase.autostash=true", "rebase", f"origin/{ramo}", checar=False
+    )
+    if rebase.returncode != 0:
+        _git("rebase", "--abort", checar=False)
+        raise ErroGit(
+            f"não consegui sincronizar com origin/{ramo}: "
+            f"{(rebase.stderr or rebase.stdout).strip()[:300]}"
+        )
+
+    return _git("rev-parse", "--short", "HEAD").stdout.strip()
+
+
 def publicar(resumo: str) -> str | None:
     """Commita data/ e empurra. Devolve o hash, ou None se não havia novidade."""
     ramo = ramo_atual()

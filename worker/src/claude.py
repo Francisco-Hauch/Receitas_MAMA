@@ -91,6 +91,17 @@ FLAGS = [
     "--strict-mcp-config",
 ]
 
+# Receita que veio em foto: o Claude precisa da ferramenta Read para abrir o
+# arquivo. Medido: ele lê .jpg/.png e descreve corretamente — por isso este
+# projeto NÃO precisa de um modelo de OCR separado.
+#
+# Ligar a ferramenta muda o prefixo e portanto o cache: são dois caches
+# distintos, um para texto e um para foto. Cada um se mantém quente sozinho.
+FLAGS_FOTO = [*FLAGS, "--allowed-tools", "Read"]
+
+# Fotos são mais caras e mais lentas que texto; lote menor.
+TAMANHO_LOTE_FOTO = 2
+
 
 INSTRUCAO = """\
 Você recebe receitas em texto bruto: OCR de caderno manuscrito, transcrição de \
@@ -113,22 +124,63 @@ estiver ilegível ou ambíguo, e quando você tiver estimado conversões.
 """
 
 
+INSTRUCAO_FOTO = """\
+Cada bloco abaixo indica arquivos de imagem de uma receita: foto de caderno \
+manuscrito, de livro ou de papel avulso. ABRA cada arquivo com a ferramenta \
+Read e transcreva o que está escrito.
+
+Regras:
+- Leia TODOS os arquivos listados no bloco antes de responder: uma receita \
+costuma ocupar mais de uma foto (ingredientes numa, preparo noutra).
+- Escreva tudo em português do Brasil, corrigindo ortografia e acentuação.
+- Em cada ingrediente mantenha o texto original em "bruto" e normalize em \
+"qtd"/"unidade"/"item". Use g para sólidos e ml para líquidos quando a \
+conversão for razoável; para contáveis (ovos, dentes de alho) use "unidade".
+- Se não souber um valor opcional, OMITA o campo. Nunca invente número.
+- Se um trecho estiver ilegível, NÃO adivinhe: registre em "notas" o que não \
+deu para ler e abaixe a "confianca".
+- "passos" contém só o modo de preparo, uma ação por item, no imperativo.
+- "tags" em minúsculas: tipo do prato, método e ocasião. Entre 2 e 6.
+- "confianca" de 0 a 1: quanto você confia na leitura da letra e da foto.
+- "issue" deve repetir EXATAMENTE o número informado no bloco.
+- Devolva uma entrada em "receitas" para CADA bloco recebido, na mesma ordem.
+"""
+
+
 class ErroClaude(RuntimeError):
     """Falha ao chamar o headless ou ao interpretar a resposta."""
 
 
+def _cabecalho(item: dict) -> list[str]:
+    """A parte do bloco que é igual para texto e para foto."""
+    partes = [f"\n{'=' * 60}\nISSUE: {item['issue']}"]
+    partes.append(f"ORIGEM: {item.get('tipo') or 'desconhecida'}")
+    if item.get("titulo"):
+        partes.append(f"NOME SUGERIDO: {item['titulo']}")
+    if item.get("notas"):
+        partes.append(f"OBSERVAÇÕES DE QUEM ENVIOU: {item['notas']}")
+    return partes
+
+
 def montar_prompt(itens: list[dict]) -> str:
-    """Junta vários itens da fila num prompt só."""
+    """Junta vários itens de texto num prompt só."""
     partes = [INSTRUCAO]
 
     for item in itens:
-        partes.append(f"\n{'=' * 60}\nISSUE: {item['issue']}")
-        partes.append(f"ORIGEM: {item.get('tipo') or 'desconhecida'}")
-        if item.get("titulo"):
-            partes.append(f"NOME SUGERIDO: {item['titulo']}")
-        if item.get("notas"):
-            partes.append(f"OBSERVAÇÕES DE QUEM ENVIOU: {item['notas']}")
+        partes.extend(_cabecalho(item))
         partes.append(f"\nTEXTO:\n{item['conteudo']}")
+
+    return "\n".join(partes)
+
+
+def montar_prompt_foto(itens: list[dict]) -> str:
+    """Idem, mas cada item traz 'arquivos': caminhos absolutos das imagens."""
+    partes = [INSTRUCAO_FOTO]
+
+    for item in itens:
+        partes.extend(_cabecalho(item))
+        arquivos = "\n".join(str(caminho) for caminho in item["arquivos"])
+        partes.append(f"\nARQUIVOS PARA LER:\n{arquivos}")
 
     return "\n".join(partes)
 
@@ -189,6 +241,15 @@ def estruturar(itens: list[dict]) -> tuple[list[dict], dict]:
         return [], {}
 
     conteudo, uso = chamar(FLAGS, montar_prompt(itens))
+    return conteudo.get("receitas", []), uso
+
+
+def estruturar_fotos(itens: list[dict]) -> tuple[list[dict], dict]:
+    """Passada 1 para fotos: mesma saída, mas lendo imagens do disco."""
+    if not itens:
+        return [], {}
+
+    conteudo, uso = chamar(FLAGS_FOTO, montar_prompt_foto(itens))
     return conteudo.get("receitas", []), uso
 
 

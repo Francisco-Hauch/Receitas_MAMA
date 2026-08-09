@@ -6,8 +6,13 @@ body:
   - type: markdown
     attributes:
       value: |
-        Anexe a foto ou o áudio, ou cole o link.
         Fica na fila até o PC ligar — não precisa esperar nada.
+
+        **Foto tem um passo a mais.** Anexo de issue em repositório privado
+        não pode ser lido por fora do navegador, então a imagem precisa entrar
+        no repositório: vá em `data/fotos/` → **Add file** → **Upload files**,
+        envie a foto, e depois escreva aqui **só o nome do arquivo**
+        (um por linha, se a receita ocupar mais de uma foto).
 
   - type: dropdown
     id: tipo
@@ -26,10 +31,11 @@ body:
     attributes:
       label: Conteúdo
       description: >
-        Arraste a foto ou o áudio para dentro desta caixa,
-        ou cole o link, ou digite a receita direto.
+        Foto: o NOME do arquivo que você subiu em data/fotos/, um por linha.
+        Link: cole a URL. Texto: digite a receita direto.
       placeholder: |
-        Arraste o arquivo aqui, ou cole https://...
+        pao-de-alho-frente.jpg
+        pao-de-alho-verso.jpg
     validations:
       required: true
 

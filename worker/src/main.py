@@ -53,6 +53,29 @@ def issue_para_item(issue: dict) -> dict:
     }
 
 
+def preparar_foto(item: dict) -> tuple[dict | None, str | None]:
+    """Troca os nomes de arquivo da issue pelos caminhos reais das imagens.
+
+    Devolve (item pronto, None) ou (None, motivo da recusa). Recusar aqui é
+    barato; recusar depois de gastar a chamada não é.
+    """
+    encontradas, faltando = armazenar.achar_fotos(item["conteudo"])
+
+    if faltando:
+        return None, (
+            f"não achei em `data/fotos/`: {', '.join(faltando)}. "
+            "Suba a imagem no repositório (Add file → Upload files) e escreva "
+            "só o nome do arquivo no campo Conteúdo."
+        )
+    if not encontradas:
+        return None, (
+            "o campo Conteúdo não tinha nome de arquivo nenhum. Para receita "
+            "por foto, suba a imagem em `data/fotos/` e escreva o nome dela aqui."
+        )
+
+    return {**item, "arquivos": encontradas}, None
+
+
 def listar(fila: list[dict]) -> None:
     for issue in fila:
         item = issue_para_item(issue)
@@ -133,11 +156,52 @@ def processar(
         vazios = [i["issue"] for i in itens if not i["conteudo"]]
         print(f"  ignorando {len(vazios)} issue(s) sem conteúdo: {vazios}\n")
 
+    # Foto e texto tomam caminhos diferentes: foto precisa da ferramenta Read
+    # ligada, o que muda as flags e portanto o cache. Um lote nunca mistura.
+    textos, fotos = [], []
+    for item in validos:
+        if (item.get("tipo") or "").strip().lower() != "foto":
+            textos.append(item)
+            continue
+
+        pronto, motivo = preparar_foto(item)
+        if pronto:
+            fotos.append(pronto)
+        else:
+            print(f"  #{item['issue']}: {motivo}")
+            if not simular:
+                gh.trocar_status(item["issue"], github.NOVO, github.ERRO)
+                gh.comentar(item["issue"], f"Não deu para processar:\n\n> {motivo}")
+
     gravadas: dict[int, Receita] = {}
 
-    for numero_lote, lote in enumerate(claude.em_lotes(validos), start=1):
+    if fotos:
+        rodar_lotes(gh, fotos, gravadas, simular, foto=True)
+    if textos:
+        rodar_lotes(gh, textos, gravadas, simular, foto=False)
+
+    complementos = 0
+    if enriquecer_tambem and gravadas:
+        complementos = complementar(gravadas, simular)
+
+    return gravadas, complementos
+
+
+def rodar_lotes(
+    gh: GitHub,
+    itens: list[dict],
+    gravadas: dict[int, Receita],
+    simular: bool,
+    foto: bool,
+) -> None:
+    """O ciclo por lote, igual para texto e foto — só muda quem chama o Claude."""
+    estruturar = claude.estruturar_fotos if foto else claude.estruturar
+    tamanho = claude.TAMANHO_LOTE_FOTO if foto else claude.TAMANHO_LOTE
+    origem = "foto" if foto else "texto"
+
+    for numero_lote, lote in enumerate(claude.em_lotes(itens, tamanho), start=1):
         numeros = [i["issue"] for i in lote]
-        print(f"--- lote {numero_lote}: issues {numeros}")
+        print(f"--- lote {origem} {numero_lote}: issues {numeros}")
 
         if not simular:
             for n in numeros:
@@ -145,10 +209,14 @@ def processar(
             # o bruto vai para o disco ANTES da chamada: a partir daqui a
             # receita não depende mais da issue existir
             for item in lote:
-                armazenar.salvar_bruto(item)
+                # Path não vira JSON; guardamos o nome, que é o que interessa
+                registro = {**item}
+                if "arquivos" in registro:
+                    registro["arquivos"] = [p.name for p in registro["arquivos"]]
+                armazenar.salvar_bruto(registro)
 
         try:
-            receitas, uso = claude.estruturar(lote)
+            receitas, uso = estruturar(lote)
         except claude.ErroClaude as e:
             print(f"    FALHOU: {e}\n")
             if not simular:
@@ -187,12 +255,6 @@ def processar(
                 gh.trocar_status(n, github.PROCESSANDO, github.ERRO)
                 gh.comentar(n, f"Não foi possível processar:\n\n> {motivo}")
         print()
-
-    complementos = 0
-    if enriquecer_tambem and gravadas:
-        complementos = complementar(gravadas, simular)
-
-    return gravadas, complementos
 
 
 def complementar(gravadas: dict[int, Receita], simular: bool = False) -> int:
@@ -271,8 +333,14 @@ def main() -> None:
     if args.simular:
         print("MODO SIMULAÇÃO: nada será gravado nem alterado.")
 
-    # antes de pegar trabalho novo, conserta o que ficou pela metade
     if not args.simular:
+        # traz o que chegou pelo site do GitHub (as fotos, principalmente)
+        try:
+            print(f"Sincronizado com o remoto: {versionar.sincronizar()}")
+        except versionar.ErroGit as e:
+            print(f"AVISO: segui sem sincronizar -> {e}")
+
+        # antes de pegar trabalho novo, conserta o que ficou pela metade
         recuperar(gh)
 
     fila = gh.listar_fila()

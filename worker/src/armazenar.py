@@ -21,6 +21,9 @@ DADOS = RAIZ / "data"
 RECEITAS = DADOS / "receitas"
 COMPLEMENTOS = DADOS / "complementos"
 BRUTOS = DADOS / "brutos"
+FOTOS = DADOS / "fotos"
+
+EXTENSOES_IMAGEM = {".jpg", ".jpeg", ".png", ".webp", ".heic"}
 
 
 def slug(texto: str) -> str:
@@ -81,6 +84,32 @@ def salvar_bruto(item: dict) -> Path:
     return _gravar(
         BRUTOS, item["issue"], item.get("titulo") or "sem-titulo", item
     )
+
+
+def achar_fotos(conteudo: str) -> tuple[list[Path], list[str]]:
+    """Resolve os nomes escritos na issue para caminhos em data/fotos/.
+
+    Devolve (encontradas, faltando). Aceita um nome por linha e ignora barras
+    que a pessoa tenha digitado por hábito ("data/fotos/x.jpg" e "x.jpg" dão no
+    mesmo) — o arquivo é sempre procurado dentro de FOTOS, nunca fora dela.
+    """
+    encontradas, faltando = [], []
+
+    for linha in conteudo.splitlines():
+        nome = linha.strip().strip("`").replace("\\", "/").split("/")[-1]
+        if not nome:
+            continue
+        if Path(nome).suffix.lower() not in EXTENSOES_IMAGEM:
+            faltando.append(f"{nome} (não parece nome de imagem)")
+            continue
+
+        caminho = FOTOS / nome
+        if caminho.is_file():
+            encontradas.append(caminho)
+        else:
+            faltando.append(nome)
+
+    return encontradas, faltando
 
 
 def tem_receita(issue: int) -> bool:
