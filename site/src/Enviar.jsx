@@ -64,7 +64,7 @@ export default function Enviar() {
   if (resultado) {
     return (
       <>
-        <a className="voltar" href="#/">
+        <a className="voltar btn btn-ghost" href="#/">
           ← todas as receitas
         </a>
         <h1 className="titulo">Recebido</h1>
@@ -72,10 +72,10 @@ export default function Enviar() {
           Entrou na fila como issue #{resultado.issue}. Ela fica lá até o
           computador ligar; quando o worker processar, a receita aparece aqui.
         </p>
-        <p className="ficha-tecnica">
+        <p>
           <button
             type="button"
-            className="tag"
+            className="btn btn-secondary"
             onClick={() => setResultado(null)}
           >
             mandar outra
@@ -87,7 +87,7 @@ export default function Enviar() {
 
   return (
     <>
-      <a className="voltar" href="#/">
+      <a className="voltar btn btn-ghost" href="#/">
         ← todas as receitas
       </a>
       <h1 className="titulo">Mandar uma receita</h1>

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Enviar from "./Enviar.jsx";
 import Lista from "./Lista.jsx";
 import Receita from "./Receita.jsx";
-import { acharReceita, receitas } from "./dados.js";
+import { acharReceita } from "./dados.js";
 import { useSessao } from "./sessao.js";
 
 /**
@@ -41,19 +41,20 @@ export default function App() {
       <header className="topo">
         <div className="topo-interno">
           <a className="marca" href="#/">
-            Receitas da Mamãe
+            Receitas <span className="marca-sub">da Mamãe</span>
           </a>
-          <span className="contagem">
+          <div className="topo-acoes">
             {podeEnviar && (
-              <a href="#/enviar">mandar receita</a>
+              <a className="btn btn-ghost" href="#/enviar">
+                mandar receita
+              </a>
             )}
             {sessao?.rotulo && (
-              <>
-                {podeEnviar && " · "}
+              <span className="topo-sessao">
                 {sessao.rotulo} · <a href="/sair">sair</a>
-              </>
+              </span>
             )}
-          </span>
+          </div>
         </div>
       </header>
 
@@ -63,7 +64,7 @@ export default function App() {
             <Enviar />
           ) : (
             <>
-              <a className="voltar" href="#/">
+              <a className="voltar btn btn-ghost" href="#/">
                 ← todas as receitas
               </a>
               <h1 className="titulo">Só leitura</h1>
@@ -75,7 +76,7 @@ export default function App() {
           )
         ) : rota && !receita ? (
           <>
-            <a className="voltar" href="#/">
+            <a className="voltar btn btn-ghost" href="#/">
               ← todas as receitas
             </a>
             <h1 className="titulo">Receita não encontrada</h1>
@@ -89,6 +90,11 @@ export default function App() {
           <Lista />
         )}
       </main>
+
+      <footer className="rodape">
+        <span>Caderno de Receitas da Mamãe</span>
+        <span>Feito em casa</span>
+      </footer>
     </>
   );
 }

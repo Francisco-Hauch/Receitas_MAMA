@@ -1,114 +1,274 @@
-/* Receitas da Mamãe — caderno pautado.
+/* Receitas da Mamãe — "Caderno de Receitas".
  *
- * A ideia que manda em tudo: o que a mamãe escreveu fica NA PÁGINA; o que a
- * internet sugeriu fica NA MARGEM. Por isso a única marca gráfica forte do
- * site é a linha vermelha da margem — e por isso não existe pauta atrás do
- * texto: linha atrás de receita atrapalha quem está cozinhando, e decoração
- * que atrapalha o trabalho é decoração a menos.
+ * Estética de livro de receitas de família: fundo creme, tipografia serifada
+ * (Cormorant Garamond nos títulos, Lora no corpo), um único accent dourado e
+ * fotos com moldura de "prato". Sistema mono de cor — uma só voz de destaque.
+ *
+ * A ideia que manda no conteúdo continua: o que a mamãe escreveu é a receita;
+ * o que a internet sugeriu vem sempre marcado ("da internet"), em card à parte,
+ * nunca misturado ao texto dela.
  */
 
 :root {
-  --papel: #eceef1;
-  --ficha: #fbfcfd;
-  --tinta: #16263f; /* azul de caneta esferográfica */
-  --tinta-fraca: #5b6a80;
-  --linha: #ccd8e6; /* pauta */
-  --margem: #b6463c; /* a linha vermelha: tudo que não é da mamãe */
-  --margem-fraca: #f0dedb;
+  --color-bg: #f3f2f2;
+  --color-surface: #eae9e9;
+  --color-text: #201f1d;
+  --color-accent: #b68235;
+  --color-divider: color-mix(in srgb, #201f1d 16%, transparent);
 
-  --display: "Archivo", system-ui, sans-serif;
-  --mono: "Azeret Mono", ui-monospace, "Cascadia Mono", monospace;
+  /* rampas tonais (OKLCH, mesma escala de lightness) */
+  --color-neutral-100: #f8f4f4;
+  --color-neutral-200: #eae7e7;
+  --color-neutral-300: #d7d3d3;
+  --color-neutral-400: #bab6b6;
+  --color-neutral-500: #9b9797;
+  --color-neutral-600: #7d7979;
+  --color-neutral-700: #605d5d;
+  --color-neutral-800: #444141;
+  --color-neutral-900: #2d2b2b;
 
-  --largura: 46rem;
-  --coluna-margem: 12rem;
+  --color-accent-100: #fff3e4;
+  --color-accent-200: #ffe3bf;
+  --color-accent-300: #facb8d;
+  --color-accent-400: #e1ad66;
+  --color-accent-500: #c28d41;
+  --color-accent-600: #a06f24;
+  --color-accent-700: #7d5411;
+  --color-accent-800: #5a3b0a;
+  --color-accent-900: #3a270d;
 
-  --raio: 3px; /* quase reto: papel não tem canto redondo */
+  --font-heading: "Cormorant Garamond", Georgia, serif;
+  --font-heading-weight: 600;
+  --font-body: "Lora", Georgia, serif;
+
+  --space-1: 4.6px;
+  --space-2: 9.2px;
+  --space-3: 13.8px;
+  --space-4: 18.4px;
+  --space-6: 27.6px;
+  --space-8: 36.8px;
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 7px;
+
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #2d2b2b 14%, transparent);
+  --shadow-md: 0 3px 10px color-mix(in srgb, #2d2b2b 16%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, #2d2b2b 22%, transparent);
+
+  --largura: 1080px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --papel: #131a24;
-    --ficha: #1a222e;
-    --tinta: #dde5ef;
-    --tinta-fraca: #93a2b8;
-    --linha: #2c3949;
-    --margem: #e4796d;
-    --margem-fraca: #3a2724;
-  }
-}
-
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  background: var(--papel);
-  color: var(--tinta);
-  font-family: var(--display);
-  font-size: 17px;
-  line-height: 1.6;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+  font-weight: 400;
   -webkit-text-size-adjust: 100%;
 }
 
-a {
-  color: inherit;
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  margin: 0 0 var(--space-2);
+}
+h1 { font-size: 42px; }
+h2 { font-size: 32px; font-weight: 400; }
+h3 { font-size: 25px; }
+h4 { font-size: 20px; }
+h5 { font-size: 16px; }
+h6 {
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-:focus-visible {
-  outline: 2px solid var(--margem);
-  outline-offset: 3px;
+p { margin: 0 0 var(--space-3); }
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 3px;
 }
+a:hover { color: var(--color-accent-700); }
+
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
-    animation: none !important;
-    transition: none !important;
-  }
+  * { animation: none !important; transition: none !important; }
+}
+
+.text-muted { color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+
+.hr {
+  height: 1px;
+  border: 0;
+  margin: var(--space-6) 0;
+  background: var(--color-divider);
+}
+
+.kicker {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: 14px;
+}
+
+/* — botões — */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 14px;
+  line-height: 1.2;
+  color: var(--color-text);
+  background: transparent;
+  border: 1px solid transparent;
+  padding: var(--space-2) calc(var(--space-3) * 1.2);
+  border-radius: var(--radius-md);
+}
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-primary { color: var(--color-accent); border-color: var(--color-accent); }
+.btn-primary:hover { background: color-mix(in srgb, var(--color-accent) 12%, transparent); color: var(--color-accent); }
+.btn-primary:active { background: color-mix(in srgb, var(--color-accent) 22%, transparent); }
+.btn-secondary { border-color: var(--color-divider); }
+.btn-secondary:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+.btn-ghost { color: var(--color-accent); padding-inline: var(--space-1); }
+.btn-ghost:hover { background: color-mix(in srgb, var(--color-accent) 10%, transparent); color: var(--color-accent); }
+.btn-block { width: 100%; margin-top: var(--space-2); }
+
+/* — moldura de prato (fotos) — */
+.plate {
+  filter: sepia(0.22) saturate(0.82) contrast(1.05);
+  border: 6px solid var(--color-surface);
+  outline: 1px solid var(--color-divider);
+  background: var(--color-accent-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.plate-ph {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  color: var(--color-accent-400);
+  opacity: 0.85;
+  text-align: center;
+  padding: 0 12px;
+  line-height: 1.05;
+}
+
+/* — tags — */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  padding: 3px 10px;
+  border-radius: calc(var(--radius-md) * 0.75);
+  border: 0;
+  font-family: var(--font-body);
+  cursor: default;
+}
+.tag-accent { background: var(--color-accent-100); color: var(--color-accent-800); }
+.tag-neutral { background: var(--color-neutral-100); color: var(--color-neutral-800); }
+
+/* filtros clicáveis (lista e formulário) reaproveitam .tag mas com estado */
+button.tag { cursor: pointer; }
+button.tag[aria-pressed] {
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: color-mix(in srgb, var(--color-text) 70%, transparent);
+}
+button.tag[aria-pressed]:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+button.tag[aria-pressed="true"] {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+}
+
+/* — cards (nota da internet, dicas) — */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid var(--color-divider);
+}
+.card-kicker {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent);
 }
 
 /* ---------------------------------------------------------------- cabeçalho */
 .topo {
-  border-bottom: 1px solid var(--linha);
-  background: var(--ficha);
   position: sticky;
   top: 0;
   z-index: 10;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-divider);
 }
-
 .topo-interno {
   max-width: var(--largura);
   margin: 0 auto;
-  padding: 0.9rem 1.2rem;
+  padding: 14px 40px;
   display: flex;
   align-items: baseline;
-  gap: 0.9rem;
+  gap: var(--space-4);
 }
-
 .marca {
-  font-weight: 800;
-  font-size: 1.05rem;
-  letter-spacing: -0.02em;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 20px;
   text-decoration: none;
+  color: var(--color-text);
   white-space: nowrap;
 }
-
-/* o ponto vermelho é a margem do caderno reduzida a um sinal */
-.marca::before {
-  content: "";
-  display: inline-block;
-  width: 3px;
-  height: 0.95em;
-  background: var(--margem);
-  margin-right: 0.5rem;
-  vertical-align: -0.1em;
+.marca:hover { color: var(--color-text); }
+.marca-sub {
+  font-family: var(--font-body);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
 }
-
-.contagem {
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  color: var(--tinta-fraca);
+.topo-acoes {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: 13px;
+}
+.topo-sessao {
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
   white-space: nowrap;
 }
 
@@ -116,157 +276,256 @@ a {
 .pagina {
   max-width: var(--largura);
   margin: 0 auto;
-  padding: 1.5rem 1.2rem 5rem;
+  padding: 40px 40px 88px;
+}
+
+/* ------------------------------------------------------------- home / hero */
+.hero {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 56px;
+  align-items: end;
+  padding: 16px 0 36px;
+}
+.display {
+  font-size: 60px;
+  font-weight: 400;
+  line-height: 1.04;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+.hero-lede {
+  text-align: justify;
+  hyphens: auto;
+  font-size: 14px;
+  line-height: 1.75;
+  margin: 0;
+  color: color-mix(in srgb, var(--color-text) 72%, transparent);
+}
+
+/* convite para enviar (placeholder visual das zonas de arraste do mockup) */
+.convite {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  margin-bottom: 56px;
+}
+.demo-zona {
+  min-height: 132px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+  padding: 0 24px;
+  border: 1px dashed var(--color-divider);
+  border-radius: var(--radius-md);
+}
+.demo-zona-titulo { font-family: var(--font-heading); font-size: 19px; }
+.convite-rodape {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.demo-selo {
+  display: inline-block;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  border: 1px solid var(--color-divider);
+  border-radius: 999px;
+  padding: 2px 8px;
 }
 
 /* --------------------------------------------------------------- controles */
+.lista-cabecalho {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin: 28px 0 20px;
+}
+.lista-cabecalho h2 { margin: 0; }
+
 .busca {
   width: 100%;
+  min-height: 40px;
+  padding: 9px 12px;
   font: inherit;
-  padding: 0.7rem 0.9rem;
-  border: 1px solid var(--linha);
-  border-radius: var(--raio);
-  background: var(--ficha);
-  color: inherit;
+  font-size: 14px;
+  color: var(--color-text);
+  caret-color: var(--color-accent);
+  background: transparent;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
 }
-
-.busca::placeholder {
-  color: var(--tinta-fraca);
-}
+.busca::placeholder { color: color-mix(in srgb, var(--color-text) 45%, transparent); }
+.busca:hover { border-color: color-mix(in srgb, var(--color-text) 45%, transparent); }
+.busca:focus-visible { border-color: var(--color-accent); outline-offset: 0; }
 
 .tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
-  margin: 0.9rem 0 0;
+  gap: 8px;
+  margin: 14px 0 0;
   padding: 0;
   list-style: none;
 }
 
-.tag {
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  padding: 0.25rem 0.55rem;
-  border: 1px solid var(--linha);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--tinta-fraca);
-  cursor: pointer;
-}
-
-.tag[aria-pressed="true"] {
-  border-color: var(--tinta);
-  color: var(--ficha);
-  background: var(--tinta);
-}
-
-/* -------------------------------------------------------------- lista */
+/* -------------------------------------------------------------- lista/cards */
 .lista {
   list-style: none;
-  margin: 1.6rem 0 0;
+  margin: 0;
   padding: 0;
   display: grid;
-  gap: 0.7rem;
+  grid-template-columns: repeat(auto-fill, minmax(258px, 1fr));
+  gap: 30px;
 }
-
 .entrada {
   display: block;
   text-decoration: none;
-  background: var(--ficha);
-  border: 1px solid var(--linha);
-  border-left: 3px solid var(--linha);
-  border-radius: var(--raio);
-  padding: 0.9rem 1rem;
+  color: inherit;
+  cursor: pointer;
 }
-
-.entrada:hover,
-.entrada:focus-visible {
-  border-left-color: var(--margem);
+.entrada:hover { color: inherit; }
+.entrada-foto {
+  width: 100%;
+  height: 178px;
 }
-
+.entrada-foto .plate-ph { font-size: 30px; }
+.entrada-corpo { padding: 14px 2px 0; }
+.entrada-tags { display: flex; gap: 8px; margin-bottom: 8px; }
 .entrada-titulo {
-  font-weight: 700;
-  font-size: 1.1rem;
-  letter-spacing: -0.015em;
-  margin: 0;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 22px;
+  line-height: 1.15;
+  margin: 0 0 10px;
 }
-
+.entrada:hover .entrada-titulo { color: var(--color-accent-700); }
 .entrada-meta {
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  color: var(--tinta-fraca);
-  margin: 0.35rem 0 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--color-text) 58%, transparent);
+  border-top: 1px solid var(--color-divider);
+  padding-top: 9px;
+}
+.entrada-meta .sep {
+  width: 1px;
+  height: 11px;
+  background: var(--color-divider);
 }
 
 .vazio {
-  color: var(--tinta-fraca);
-  margin-top: 2rem;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  margin-top: var(--space-4);
 }
 
-/* -------------------------------------------------------------- receita */
+/* ------------------------------------------------------------- receita */
 .voltar {
-  font-family: var(--mono);
-  font-size: 0.75rem;
-  color: var(--tinta-fraca);
-  text-decoration: none;
   display: inline-block;
-  margin-bottom: 1.2rem;
+  margin-bottom: 26px;
 }
 
 .titulo {
-  font-size: clamp(1.9rem, 6vw, 2.6rem);
-  font-weight: 800;
-  letter-spacing: -0.035em;
-  line-height: 1.1;
+  font-family: var(--font-heading);
+  font-size: 52px;
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
   margin: 0;
   text-wrap: balance;
 }
 
+.receita-hero {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 48px;
+  align-items: center;
+}
+.receita-resumo {
+  text-align: justify;
+  hyphens: auto;
+  font-size: 14px;
+  line-height: 1.75;
+  color: color-mix(in srgb, var(--color-text) 72%, transparent);
+  margin: 18px 0 22px;
+}
+.stats {
+  display: flex;
+  gap: 30px;
+  border-top: 1px solid var(--color-divider);
+  padding-top: 16px;
+}
+.stat-rotulo {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+.stat-valor {
+  font-family: var(--font-heading);
+  font-size: 20px;
+}
+.stat-valor.sugerido { color: var(--color-accent); }
+.receita-foto {
+  width: 100%;
+  height: 340px;
+}
+.receita-foto .plate-ph { font-size: 40px; }
+
+/* valores vindos da internet, não da receita */
+.sugerido { color: var(--color-accent); }
+
 .ficha-tecnica {
-  font-family: var(--mono);
-  font-size: 0.75rem;
-  color: var(--tinta-fraca);
-  margin: 0.7rem 0 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem 0.9rem;
+  gap: 6px 18px;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  margin: 0.7rem 0 0;
 }
 
-/* valores que vieram da internet, não da receita */
-.sugerido {
-  color: var(--margem);
+.receita-grid {
+  display: grid;
+  grid-template-columns: 1fr 296px;
+  gap: 48px;
 }
 
-.secao {
-  margin-top: 2.4rem;
-}
-
+.secao { margin-top: 0; }
 .secao-titulo {
-  font-family: var(--mono);
-  font-size: 0.7rem;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 13px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--tinta-fraca);
-  border-bottom: 1px solid var(--linha);
-  padding-bottom: 0.4rem;
-  margin: 0 0 0.9rem;
-  font-weight: 500;
+  margin: 0 0 14px;
+}
+.secao-lede {
+  font-size: 12px;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  margin: 0 0 22px;
 }
 
 /* ---------------------------------------------------------- ingredientes */
 .ingredientes {
   list-style: none;
-  margin: 0;
+  margin: 0 0 46px;
   padding: 0;
 }
-
 .ingrediente {
   display: grid;
-  grid-template-columns: 4.6rem 1fr;
-  gap: 0.8rem;
+  grid-template-columns: 82px 1fr;
+  gap: 14px;
   align-items: baseline;
-  padding: 0.55rem 0;
-  border-bottom: 1px solid var(--linha);
+  padding: 9px 0;
+  border-bottom: 1px solid var(--color-divider);
   cursor: pointer;
   text-align: left;
   width: 100%;
@@ -275,20 +534,17 @@ a {
   border-right: 0;
   border-top: 0;
   font: inherit;
+  font-size: 14px;
   color: inherit;
 }
-
 .quantidade {
-  font-family: var(--mono);
-  font-size: 0.78rem;
-  color: var(--tinta-fraca);
   text-align: right;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
   font-variant-numeric: tabular-nums;
 }
-
 .ingrediente[data-usado="true"] .quantidade,
 .ingrediente[data-usado="true"] .item {
-  color: var(--tinta-fraca);
+  color: color-mix(in srgb, var(--color-text) 40%, transparent);
   text-decoration: line-through;
   text-decoration-thickness: 1px;
 }
@@ -298,19 +554,22 @@ a {
   list-style: none;
   margin: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
   counter-reset: passo;
 }
-
 .passo {
   display: grid;
-  gap: 0.5rem;
-  padding: 0.55rem 0 1.1rem;
+  grid-template-columns: 1fr 236px;
+  gap: 26px;
+  border-top: 1px solid var(--color-divider);
+  padding-top: 18px;
 }
-
 .passo-corpo {
   display: grid;
-  grid-template-columns: 1.8rem 1fr;
-  gap: 0.7rem;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
   align-items: start;
   text-align: left;
   width: 100%;
@@ -321,227 +580,253 @@ a {
   cursor: pointer;
   padding: 0;
 }
-
 .passo-corpo::before {
   counter-increment: passo;
-  content: counter(passo);
-  font-family: var(--mono);
-  font-size: 0.78rem;
-  color: var(--margem);
-  padding-top: 0.22em;
+  content: counter(passo, decimal-leading-zero);
+  font-family: var(--font-heading);
+  font-size: 28px;
+  line-height: 1;
+  color: var(--color-accent-300);
   font-variant-numeric: tabular-nums;
 }
-
+.passo-texto {
+  font-size: 14px;
+  line-height: 1.72;
+  text-align: justify;
+  hyphens: auto;
+}
 .passo-corpo[data-feito="true"] .passo-texto {
-  color: var(--tinta-fraca);
+  color: color-mix(in srgb, var(--color-text) 45%, transparent);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
 }
 
-/* ------------------------------------------------------- a margem vermelha */
+/* nota "da internet" ao lado do passo (o card de recomendação do mockup) */
 .nota {
-  border-left: 2px solid var(--margem);
-  padding: 0.1rem 0 0.1rem 0.75rem;
-  margin-left: 2.5rem;
-  color: var(--tinta-fraca);
-  font-size: 0.86rem;
-  line-height: 1.5;
-}
-
-.nota-rotulo {
-  font-family: var(--mono);
-  font-size: 0.62rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--margem);
-  display: block;
-  margin-bottom: 0.15rem;
-}
-
-/* No desktop a sugestão vai literalmente para a margem, ao lado do passo que
-   comenta. No celular não há margem: ela vira uma nota logo abaixo, com a
-   mesma linha vermelha para dizer a mesma coisa. */
-@media (min-width: 62rem) {
-  .pagina-receita {
-    max-width: calc(var(--largura) + var(--coluna-margem) + 2rem);
-  }
-
-  /* Tudo que não é passo precisa recuar o mesmo tanto, senão as seções não
-     se alinham entre si — só os passos usam a margem como coluna de grade. */
-  .pagina-receita .voltar,
-  .pagina-receita .titulo,
-  .pagina-receita .ficha-tecnica,
-  .pagina-receita .secao-recuada,
-  .pagina-receita .internet,
-  .pagina-receita .transcricao {
-    padding-left: calc(var(--coluna-margem) + 2rem);
-  }
-
-  .passo {
-    grid-template-columns: var(--coluna-margem) 1fr;
-    align-items: start;
-    column-gap: 2rem;
-  }
-
-  .passo-corpo {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .nota {
-    grid-column: 1;
-    grid-row: 1;
-    border-left: 0;
-    border-right: 2px solid var(--margem);
-    padding: 0.1rem 0.75rem 0.1rem 0;
-    margin-left: 0;
-    text-align: right;
-  }
-}
-
-/* ----------------------------------------------------- bloco da internet */
-.internet {
-  margin-top: 2.8rem;
-  border-top: 2px solid var(--margem);
-  padding-top: 1rem;
-}
-
-.internet-cabecalho {
+  align-self: start;
+  padding: 12px 14px;
+  gap: 5px;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
+  flex-direction: column;
 }
-
-.internet-titulo {
-  font-family: var(--mono);
-  font-size: 0.7rem;
+.nota-rotulo {
+  font-size: 10px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--margem);
+  color: var(--color-accent);
+}
+.nota-texto {
+  font-size: 12.5px;
+  line-height: 1.6;
   margin: 0;
-  font-weight: 500;
+  color: color-mix(in srgb, var(--color-text) 80%, transparent);
 }
 
+/* ------------------------------------------------------ coluna lateral */
+.receita-lado { min-width: 0; }
+.galeria {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+.galeria figure { margin: 0; }
+.galeria .plate { width: 100%; height: 86px; }
+.galeria .plate-ph { font-size: 12px; }
+.galeria figcaption {
+  font-size: 11px;
+  margin-top: var(--space-1);
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+.outras { display: flex; flex-direction: column; }
+.outra {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-divider);
+  text-decoration: none;
+  color: inherit;
+}
+.outra:hover { color: var(--color-accent-700); }
+.outra-titulo { font-family: var(--font-heading); font-size: 16px; }
+.outra-tempo {
+  font-size: 11px;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+/* ----------------------------------------------------- dicas da internet */
+.internet { margin-top: 0; }
+.internet-titulo { font-weight: 400; margin: 0 0 4px; }
 .internet-aviso {
-  font-size: 0.8rem;
-  color: var(--tinta-fraca);
-  margin: 0.35rem 0 1rem;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  margin-bottom: 24px;
 }
-
-.sugestoes {
+.dicas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 56px;
+}
+.dica-card { padding: 16px 18px; }
+.dica-titulo { font-family: var(--font-heading); font-size: 18px; line-height: 1.2; }
+.dica-texto {
+  font-size: 13px;
+  line-height: 1.65;
   margin: 0;
+  text-align: justify;
+  color: color-mix(in srgb, var(--color-text) 78%, transparent);
+}
+.sugestoes {
+  margin: 0 0 24px;
   padding-left: 1.1rem;
-  color: var(--tinta-fraca);
-  font-size: 0.92rem;
+  font-size: 13.5px;
+  color: color-mix(in srgb, var(--color-text) 82%, transparent);
 }
-
-.sugestoes li {
-  margin-bottom: 0.45rem;
-}
-
-.sugestoes li::marker {
-  color: var(--margem);
-}
+.sugestoes li { margin-bottom: 0.45rem; }
+.sugestoes li::marker { color: var(--color-accent); }
 
 .fontes {
   list-style: none;
-  margin: 1.1rem 0 0;
+  margin: 0;
   padding: 0;
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  line-height: 1.5;
+  font-size: 12.5px;
+  line-height: 1.6;
 }
-
-.fontes li {
-  margin-bottom: 0.4rem;
-  overflow-wrap: anywhere;
-}
-
-.fontes a {
-  color: var(--tinta-fraca);
-}
-
+.fontes li { margin-bottom: 0.5rem; overflow-wrap: anywhere; }
 .nao-verificada {
-  color: var(--margem);
-  background: var(--margem-fraca);
-  padding: 0 0.3rem;
-  border-radius: var(--raio);
-  margin-right: 0.35rem;
+  color: var(--color-accent-800);
+  background: var(--color-accent-100);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  margin-right: 0.4rem;
+  font-size: 11px;
   white-space: nowrap;
+}
+
+/* ------------------------------------------------------------- recados */
+.recados-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 48px;
+}
+.recado {
+  border-top: 1px solid var(--color-divider);
+  padding-top: 14px;
+  margin-bottom: 20px;
+}
+.recado-cab { display: flex; align-items: baseline; gap: 10px; margin-bottom: 5px; }
+.recado-autor { font-family: var(--font-heading); font-size: 16px; }
+.recado-quando { font-size: 11px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+.recado-texto {
+  font-size: 13.5px;
+  line-height: 1.7;
+  margin: 0;
+  text-align: justify;
+  color: color-mix(in srgb, var(--color-text) 82%, transparent);
 }
 
 /* ------------------------------------------------------------ formulário */
 .formulario {
   margin-top: 1.8rem;
   display: grid;
-  gap: 1.6rem;
+  gap: var(--space-6);
+  max-width: 640px;
 }
-
 .campo {
   display: grid;
-  gap: 0.45rem;
+  gap: 6px;
   border: 0;
   padding: 0;
   margin: 0;
-  min-width: 0; /* fieldset não encolhe sozinho dentro de grid */
+  min-width: 0;
 }
-
-.campo .secao-titulo {
+.campo .secao-titulo,
+.field > label {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
   margin: 0;
+  color: color-mix(in srgb, var(--color-text) 70%, transparent);
 }
-
-textarea.busca {
-  resize: vertical;
-  font-family: inherit;
-  line-height: 1.6;
-}
-
-input[type="file"].busca {
-  padding: 0.55rem;
-  font-family: var(--mono);
-  font-size: 0.78rem;
-}
-
-.dica {
-  font-size: 0.82rem;
-  color: var(--tinta-fraca);
-}
-
+textarea.busca { resize: vertical; font-family: inherit; line-height: 1.6; min-height: 90px; }
+input[type="file"].busca { padding: 8px; font-size: 13px; }
+.dica { font-size: 12px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
 .aviso-erro {
   margin: 0;
-  border-left: 2px solid var(--margem);
+  border-left: 2px solid var(--color-accent);
   padding-left: 0.75rem;
-  color: var(--margem);
-  font-size: 0.9rem;
+  color: var(--color-accent-800);
+  font-size: 13px;
 }
-
 .enviar {
-  font: inherit;
-  font-weight: 700;
-  padding: 0.75rem 1.1rem;
-  border: 0;
-  border-radius: var(--raio);
-  background: var(--tinta);
-  color: var(--ficha);
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 14px;
+  padding: var(--space-2) calc(var(--space-3) * 1.2);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-accent);
   cursor: pointer;
   justify-self: start;
 }
-
-.enviar:disabled {
-  background: var(--linha);
-  color: var(--tinta-fraca);
-  cursor: not-allowed;
-}
+.enviar:hover { background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
+.enviar:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* --------------------------------------------------------- rodapé/notas */
 .transcricao {
-  margin-top: 2.8rem;
-  border-top: 1px solid var(--linha);
+  margin-top: var(--space-8);
+  border-top: 1px solid var(--color-divider);
   padding-top: 1rem;
-  font-size: 0.84rem;
-  color: var(--tinta-fraca);
+  font-size: 13px;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+.transcricao p { margin: 0.4rem 0 0; }
+
+/* rodapé do site */
+.rodape {
+  max-width: var(--largura);
+  margin: 0 auto;
+  border-top: 1px solid var(--color-divider);
+  padding: 26px 40px;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
 }
 
-.transcricao p {
-  margin: 0.4rem 0 0;
+/* ============================================================== responsivo */
+@media (max-width: 900px) {
+  .hero { grid-template-columns: 1fr; gap: 24px; align-items: start; }
+  .display { font-size: 44px; }
+  .titulo { font-size: 40px; }
+  .receita-hero { grid-template-columns: 1fr; gap: 24px; }
+  .receita-foto { height: 240px; order: -1; }
+  .receita-grid { grid-template-columns: 1fr; gap: 36px; }
+  .passo { grid-template-columns: 1fr; gap: 14px; }
+  .recados-grid { grid-template-columns: 1fr; gap: 32px; }
+  .convite { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 620px) {
+  .pagina { padding: 28px 20px 72px; }
+  .topo-interno { padding: 12px 20px; }
+  .rodape { padding: 22px 20px; }
+  .display { font-size: 36px; }
+  .titulo { font-size: 34px; }
+  .stats { gap: 20px; }
+  .lista { grid-template-columns: 1fr 1fr; gap: 18px; }
+  .topo-acoes { font-size: 12px; gap: var(--space-2); }
 }
