@@ -7,7 +7,9 @@
 *.jpg  binary
 *.jpeg binary
 *.webp binary
+*.heic binary
 *.pdf  binary
+*.docx binary
 *.mp3  binary
 *.m4a  binary
 *.ogg  binary

@@ -710,28 +710,6 @@ button.tag[aria-pressed="true"] {
   white-space: nowrap;
 }
 
-/* ------------------------------------------------------------- recados */
-.recados-grid {
-  display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 48px;
-}
-.recado {
-  border-top: 1px solid var(--color-divider);
-  padding-top: 14px;
-  margin-bottom: 20px;
-}
-.recado-cab { display: flex; align-items: baseline; gap: 10px; margin-bottom: 5px; }
-.recado-autor { font-family: var(--font-heading); font-size: 16px; }
-.recado-quando { font-size: 11px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
-.recado-texto {
-  font-size: 13.5px;
-  line-height: 1.7;
-  margin: 0;
-  text-align: justify;
-  color: color-mix(in srgb, var(--color-text) 82%, transparent);
-}
-
 /* ------------------------------------------------------------ formulário */
 .formulario {
   margin-top: 1.8rem;
@@ -760,6 +738,31 @@ button.tag[aria-pressed="true"] {
 textarea.busca { resize: vertical; font-family: inherit; line-height: 1.6; min-height: 90px; }
 input[type="file"].busca { padding: 8px; font-size: 13px; }
 .dica { font-size: 12px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+.arquivos-escolhidos {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--color-text) 70%, transparent);
+}
+.arquivos-escolhidos li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  border-bottom: 1px dotted var(--color-divider);
+  padding-bottom: 2px;
+}
+.arquivos-escolhidos li span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.arquivos-escolhidos li span:last-child {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
 .aviso-erro {
   margin: 0;
   border-left: 2px solid var(--color-accent);
@@ -816,7 +819,6 @@ input[type="file"].busca { padding: 8px; font-size: 13px; }
   .receita-foto { height: 240px; order: -1; }
   .receita-grid { grid-template-columns: 1fr; gap: 36px; }
   .passo { grid-template-columns: 1fr; gap: 14px; }
-  .recados-grid { grid-template-columns: 1fr; gap: 32px; }
   .convite { grid-template-columns: 1fr; }
 }
 
