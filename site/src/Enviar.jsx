@@ -1,14 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
- * Mandar uma receita.
+ * Mandar uma receita — bloco da página principal, não uma tela à parte.
  *
- * O caminho principal é arrastar: a página é uma zona de arraste grande, e o
+ * O caminho principal é arrastar: a home tem uma zona de arraste grande, e o
  * arquivo é que decide o tipo do envio (imagem → foto do caderno; PDF/Word/txt
  * → documento). Só depois de aceitar o arquivo é que abre o pop-up com o resto
  * do formulário — nome e observações —, para ninguém encarar um formulário em
  * branco antes de ter o que mandar. Digitar a receita ou colar um link
  * continuam existindo, como atalhos abaixo da zona, e abrem o mesmo pop-up.
+ *
+ * `chamado` é um contador que o App incrementa quando alguém clica em "mandar
+ * receita" no cabeçalho: em vez de abrir outra página, a home rola até aqui e
+ * a zona pisca. Contador em vez de booleano porque o segundo clique também
+ * precisa valer.
  */
 
 /** Tipos que mandam arquivo em vez de texto, com a configuração de cada um. */
@@ -125,7 +130,7 @@ function Miniatura({ arquivo }) {
   );
 }
 
-export default function Enviar() {
+export default function Enviar({ chamado = 0 }) {
   const [tipo, setTipo] = useState(null);
   const [arquivos, setArquivos] = useState([]);
   const [aberto, setAberto] = useState(false);
@@ -139,6 +144,7 @@ export default function Enviar() {
   const [erro, setErro] = useState(null);
   const [erroZona, setErroZona] = useState(null);
   const [arrastando, setArrastando] = useState(false);
+  const [destaque, setDestaque] = useState(false);
 
   // dragenter/dragleave disparam também ao passar sobre os filhos da zona;
   // contar as entradas evita a borda piscando enquanto o mouse atravessa.
@@ -146,6 +152,7 @@ export default function Enviar() {
   const seletor = useRef(null);
   const fundo = useRef(null);
   const primeiroCampo = useRef(null);
+  const secao = useRef(null);
 
   const config = tipo ? ARQUIVO[tipo] : null;
 
@@ -172,6 +179,28 @@ export default function Enviar() {
       window.removeEventListener("keydown", aoTeclar);
     };
   }, [aberto, fechar]);
+
+  /**
+   * Chamado do cabeçalho: rolar até a zona e piscar a borda.
+   *
+   * O quadro seguinte, e não este, porque o App rola a página para o topo ao
+   * trocar de rota — se rolasse agora, quem viesse de uma receita voltaria
+   * para o topo no instante seguinte.
+   */
+  useEffect(() => {
+    if (!chamado) return undefined;
+
+    const quadro = requestAnimationFrame(() => {
+      secao.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      setDestaque(true);
+    });
+    const relogio = setTimeout(() => setDestaque(false), 1800);
+
+    return () => {
+      cancelAnimationFrame(quadro);
+      clearTimeout(relogio);
+    };
+  }, [chamado]);
 
   /**
    * Sem isso, soltar o arquivo um centímetro fora da zona faz o navegador
@@ -336,16 +365,14 @@ export default function Enviar() {
 
   if (resultado) {
     return (
-      <>
-        <a className="voltar btn btn-ghost" href="#/">
-          ← todas as receitas
-        </a>
-        <h1 className="titulo">Recebido</h1>
-        <p className="internet-aviso">
-          Entrou na fila como issue #{resultado.issue}. Ela fica lá até o
-          computador ligar; quando o worker processar, a receita aparece aqui.
-        </p>
-        <p>
+      <section className="envio" ref={secao}>
+        <h6 className="secao-titulo">Mandar uma receita</h6>
+        <div className="zona">
+          <p className="zona-titulo">Recebido</p>
+          <p className="zona-dica">
+            Entrou na fila como issue #{resultado.issue}. Ela fica lá até o
+            computador ligar; quando o worker processar, a receita aparece aqui.
+          </p>
           <button
             type="button"
             className="btn btn-secondary"
@@ -353,8 +380,8 @@ export default function Enviar() {
           >
             mandar outra
           </button>
-        </p>
-      </>
+        </div>
+      </section>
     );
   }
 
@@ -362,14 +389,12 @@ export default function Enviar() {
   const semTexto = !config && conteudo.trim() === "";
 
   return (
-    <>
-      <a className="voltar btn btn-ghost" href="#/">
-        ← todas as receitas
-      </a>
-      <h1 className="titulo">Mandar uma receita</h1>
+    <section className="envio" ref={secao}>
+      <h6 className="secao-titulo">Mandar uma receita</h6>
 
       <div
         className="zona"
+        data-destaque={destaque}
         data-arrastando={arrastando}
         onDragEnter={aoEntrar}
         onDragOver={(e) => e.preventDefault()}
@@ -566,6 +591,6 @@ export default function Enviar() {
           </div>
         </div>
       )}
-    </>
+    </section>
   );
 }

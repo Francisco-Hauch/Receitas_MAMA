@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import Enviar from "./Enviar.jsx";
 import { filtrar, receitas, tags } from "./dados.js";
 import { useSessao } from "./sessao.js";
 
@@ -18,7 +19,7 @@ function monograma(titulo) {
   return (titulo.trim()[0] ?? "?").toUpperCase();
 }
 
-export default function Lista() {
+export default function Lista({ chamado = 0 }) {
   const [termo, setTermo] = useState("");
   const [tag, setTag] = useState(null);
   const { podeEnviar } = useSessao();
@@ -48,37 +49,9 @@ export default function Lista() {
 
       <hr className="hr" />
 
-      {podeEnviar && (
-        <div className="convite">
-          <div>
-            <h6 className="secao-titulo">Começar pela foto</h6>
-            <div className="demo-zona" aria-hidden="true">
-              <div className="demo-zona-titulo">Arraste a foto do prato</div>
-              <div className="text-muted" style={{ fontSize: "12px" }}>
-                JPG ou PNG · a receita nasce a partir dela
-              </div>
-            </div>
-          </div>
-          <div>
-            <h6 className="secao-titulo">Já está escrita</h6>
-            <div className="demo-zona" aria-hidden="true">
-              <div className="demo-zona-titulo">Arraste o arquivo da receita</div>
-              <div className="text-muted" style={{ fontSize: "12px" }}>
-                Texto, .doc ou foto do caderno · separo em tópicos
-              </div>
-            </div>
-          </div>
-          <div className="convite-rodape">
-            <a className="btn btn-primary" href="#/enviar">
-              Mandar uma receita
-            </a>
-            <span className="demo-selo">demonstração</span>
-            <span className="text-muted" style={{ fontSize: "12px" }}>
-              O envio de verdade é pelo formulário.
-            </span>
-          </div>
-        </div>
-      )}
+      {/* o envio mora aqui, na página principal: não há mais tela à parte.
+          As duas caixas de "demonstração" do mockup viraram esta zona só. */}
+      {podeEnviar && <Enviar chamado={chamado} />}
 
       {semReceitas ? (
         <p className="vazio">

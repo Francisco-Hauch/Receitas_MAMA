@@ -303,13 +303,7 @@ button.tag[aria-pressed="true"] {
   color: color-mix(in srgb, var(--color-text) 72%, transparent);
 }
 
-/* convite para enviar (placeholder visual das zonas de arraste do mockup) */
-.convite {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 28px;
-  margin-bottom: 56px;
-}
+/* zona ainda de mentira: a galeria de fotos e os recados, dentro da receita */
 .demo-zona {
   min-height: 132px;
   display: flex;
@@ -323,13 +317,6 @@ button.tag[aria-pressed="true"] {
   border-radius: var(--radius-md);
 }
 .demo-zona-titulo { font-family: var(--font-heading); font-size: 19px; }
-.convite-rodape {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
 .demo-selo {
   display: inline-block;
   font-size: 10px;
@@ -755,6 +742,10 @@ input[type="file"].busca { padding: 8px; font-size: 13px; }
 .btn-arquivo { justify-self: start; cursor: pointer; }
 
 /* ------------------------------------------------------- zona de arraste */
+/* o envio é um bloco da home, logo abaixo do hero */
+.envio { display: block; margin: 0 0 56px; }
+.envio .zona { margin-top: 0; }
+
 .zona {
   margin-top: 28px;
   min-height: 260px;
@@ -770,7 +761,8 @@ input[type="file"].busca { padding: 8px; font-size: 13px; }
   background: transparent;
   transition: border-color 0.15s, background 0.15s;
 }
-.zona[data-arrastando="true"] {
+.zona[data-arrastando="true"],
+.zona[data-destaque="true"] {
   border-color: var(--color-accent);
   border-style: solid;
   background: color-mix(in srgb, var(--color-accent) 8%, transparent);
@@ -961,7 +953,6 @@ input[type="file"].busca { padding: 8px; font-size: 13px; }
   .receita-foto { height: 240px; order: -1; }
   .receita-grid { grid-template-columns: 1fr; gap: 36px; }
   .passo { grid-template-columns: 1fr; gap: 14px; }
-  .convite { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 620px) {
