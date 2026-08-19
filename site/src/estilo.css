@@ -738,30 +738,172 @@ button.tag[aria-pressed="true"] {
 textarea.busca { resize: vertical; font-family: inherit; line-height: 1.6; min-height: 90px; }
 input[type="file"].busca { padding: 8px; font-size: 13px; }
 .dica { font-size: 12px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+
+/* input de arquivo fora de vista: quem clica é o botão ao lado, mas o input
+ * continua no fluxo para o teclado e o leitor de tela acharem. */
+.escondido {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+.btn-arquivo { justify-self: start; cursor: pointer; }
+
+/* ------------------------------------------------------- zona de arraste */
+.zona {
+  margin-top: 28px;
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-2);
+  padding: var(--space-8) var(--space-6);
+  border: 1px dashed var(--color-divider);
+  border-radius: var(--radius-md);
+  background: transparent;
+  transition: border-color 0.15s, background 0.15s;
+}
+.zona[data-arrastando="true"] {
+  border-color: var(--color-accent);
+  border-style: solid;
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+}
+.zona-titulo {
+  font-family: var(--font-heading);
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.1;
+  margin: 0;
+}
+.zona-dica {
+  max-width: 46ch;
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0 0 var(--space-3);
+  color: color-mix(in srgb, var(--color-text) 58%, transparent);
+}
+.zona[data-arrastando="true"] .btn-primary { pointer-events: none; }
+.em-toque { display: none; }
+
+.zona-alternativas {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: var(--space-3);
+  font-size: 13px;
+  color: color-mix(in srgb, var(--color-text) 58%, transparent);
+}
+.zona-alternativas .btn { font-size: 13px; padding-block: 2px; }
+
+/* ------------------------------------------------------------- pop-up */
+.modal-fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  background: color-mix(in srgb, #2d2b2b 42%, transparent);
+}
+.modal {
+  width: min(560px, 100%);
+  max-height: min(86vh, 860px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--color-bg);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-6);
+}
+.modal-topo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  border-bottom: 1px solid var(--color-divider);
+  padding-bottom: var(--space-3);
+}
+.modal-titulo {
+  font-size: 28px;
+  font-weight: 400;
+  margin: 0;
+}
+.modal-fechar { font-size: 20px; line-height: 1; }
+.modal-corpo { margin-top: var(--space-4); gap: var(--space-4); max-width: none; }
+.modal-rodape {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  border-top: 1px solid var(--color-divider);
+  padding-top: var(--space-4);
+}
+.modal-rodape .enviar { justify-self: auto; }
+
 .arquivos-escolhidos {
   list-style: none;
   margin: 4px 0 0;
   padding: 0;
   display: grid;
-  gap: 2px;
+  gap: 6px;
   font-size: 12px;
   color: color-mix(in srgb, var(--color-text) 70%, transparent);
 }
 .arquivos-escolhidos li {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
   gap: var(--space-3);
   border-bottom: 1px dotted var(--color-divider);
-  padding-bottom: 2px;
+  padding-bottom: 6px;
 }
-.arquivos-escolhidos li span:first-child {
+.arquivo-nome {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.arquivos-escolhidos li span:last-child {
+.arquivo-tamanho {
   flex: none;
   font-variant-numeric: tabular-nums;
+}
+.arquivo-remover {
+  flex: none;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-size: 17px;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+  color: color-mix(in srgb, var(--color-text) 50%, transparent);
+}
+.arquivo-remover:hover {
+  color: var(--color-accent-800);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+.miniatura {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  border-width: 3px;
+  border-radius: var(--radius-sm);
+}
+.miniatura img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 .aviso-erro {
   margin: 0;
@@ -831,4 +973,17 @@ input[type="file"].busca { padding: 8px; font-size: 13px; }
   .stats { gap: 20px; }
   .lista { grid-template-columns: 1fr 1fr; gap: 18px; }
   .topo-acoes { font-size: 12px; gap: var(--space-2); }
+
+  /* no celular ninguém arrasta: a zona vira o botão de escolher/tirar foto,
+   * e o pop-up sobe de baixo como folha, sem margem sobrando. */
+  .zona { min-height: 180px; padding: var(--space-6) var(--space-4); }
+  .zona-titulo { font-size: 24px; }
+  .em-mouse { display: none; }
+  .em-toque { display: inline; }
+  .modal-fundo { padding: 0; align-items: flex-end; }
+  .modal {
+    max-height: 92vh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding: var(--space-4);
+  }
 }
