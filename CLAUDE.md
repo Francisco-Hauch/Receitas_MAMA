@@ -57,10 +57,10 @@ haver suporte real.
 
 | Arquivo | Papel |
 |---|---|
-| `site/src/App.jsx` | Raiz. Roteia por hash entre Lista / Receita / Enviar / telas de erro. Cabeçalho (marca, "mandar receita", rótulo da sessão, "sair"). |
-| `site/src/Lista.jsx` | Busca por nome/ingrediente (sem acento, sem caixa) e filtro por tag. |
+| `site/src/App.jsx` | Raiz. Roteia por hash entre Lista / Receita / tela de erro. **Não há mais rota de envio**: `#/enviar` (link antigo) troca para `#/`, e "mandar receita" no cabeçalho é botão, não link — incrementa o contador `chamado`, que leva a pessoa até a zona de arraste na home. |
+| `site/src/Lista.jsx` | Página principal: hero, **bloco de envio** (`Enviar`, só para quem pode enviar), busca por nome/ingrediente (sem acento, sem caixa) e filtro por tag. |
 | `site/src/Receita.jsx` | Tela principal. Hero (kicker/tag, título display, resumo, stats tempo/serve/dificuldade). Ingredientes e passos são botões marcáveis (estado some ao sair, de propósito — é sessão de cozinha). Sugestões da internet como card "da internet" ao lado do passo + seção "Dicas da internet" + fontes. Placeholders demo: galeria e recados. |
-| `site/src/Enviar.jsx` | Formulário (foto / texto / link) → `POST /api/receita`. |
+| `site/src/Enviar.jsx` | Bloco de envio da home (não é tela). Zona de arraste: o arquivo é que decide o tipo (imagem → foto, PDF/.docx/.txt/.md → documento); aceito o arquivo, abre o pop-up com nome e observações → `POST /api/receita`. Digitar a receita e mandar link são atalhos abaixo da zona, no mesmo pop-up. Recusa (tipo desconhecido, foto misturada com documento, limite de tamanho) acontece antes de abrir o pop-up. |
 | `site/src/dados.js` | Lê e indexa os JSONs; liga receita ↔ complemento pelo número da issue. |
 | `site/src/sessao.js` | Pergunta `/api/sessao` só para decidir o que mostrar. Segurança de verdade é no Worker. |
 | `site/src/estilo.css` | Design system "Caderno de Receitas": tokens (cores, serifas, espaçamento) + classes. Light-only. |

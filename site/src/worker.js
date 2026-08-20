@@ -28,12 +28,21 @@ const SESSAO = "/api/sessao";
 const LOGIN = "/entrar";
 const SAIR = "/sair";
 
-const TIPOS_ACEITOS = new Set(["foto", "audio", "link", "texto"]);
+const TIPOS_ACEITOS = new Set(["foto", "audio", "link", "texto", "documento"]);
 const SEM_RESPOSTA = "_No response_";
 
-// Base64 incha ~33%; 8 MB de arquivo viram ~11 MB de texto.
-const LIMITE_FOTO = 8 * 1024 * 1024;
-const LIMITE_FOTOS = 6;
+const MB = 1024 * 1024;
+
+// Base64 incha ~33%; 10 MB de arquivo viram ~13 MB de corpo na requisição.
+const LIMITE_FOTO = 8 * MB;
+const LIMITE_DOCUMENTO = 10 * MB;
+// Teto do envio inteiro: o Worker monta tudo em memória, e seis arquivos no
+// limite individual somariam bem mais do que cabe com folga.
+const LIMITE_TOTAL = 25 * MB;
+const LIMITE_ARQUIVOS = 6;
+
+const PASTA_FOTOS = "data/fotos";
+const PASTA_DOCUMENTOS = "data/documentos";
 
 const EXTENSOES = {
   "image/png": "png",
@@ -41,6 +50,38 @@ const EXTENSOES = {
   "image/webp": "webp",
   "image/heic": "heic",
 };
+
+const EXTENSOES_DOC = {
+  "application/pdf": "pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+    "docx",
+  "text/plain": "txt",
+  "text/markdown": "md",
+  "text/x-markdown": "md",
+};
+
+// O tipo que o navegador manda não basta: para .md ele costuma mandar vazio e
+// para .docx, "application/octet-stream" em alguns sistemas. A extensão do nome
+// entra como segunda fonte — e como a lista é fechada, confiar no nome aqui não
+// abre porta para subir qualquer coisa.
+const EXTENSOES_DOC_NOME = new Set(["pdf", "docx", "txt", "md"]);
+
+/** Tamanho real do arquivo a partir do base64, que ocupa 4 bytes a cada 3. */
+const bytesDoBase64 = (base64) => Math.floor((base64.length * 3) / 4);
+
+const emMB = (bytes) => `${Math.round(bytes / MB)} MB`;
+
+/** Extensão de um documento aceito, ou null se o formato não serve. */
+function extensaoDocumento(documento) {
+  const tipo = String(documento?.tipo || "")
+    .split(";")[0]
+    .trim()
+    .toLowerCase();
+  if (EXTENSOES_DOC[tipo]) return EXTENSOES_DOC[tipo];
+
+  const doNome = String(documento?.nome || "").split(".").pop().toLowerCase();
+  return EXTENSOES_DOC_NOME.has(doNome) ? doNome : null;
+}
 
 const json = (dados, status = 200) =>
   new Response(JSON.stringify(dados), {
@@ -92,27 +133,90 @@ export function corpoDaIssue({ tipo, conteudo, titulo, notas, autor }) {
   ].join("\n");
 }
 
-/** Sobe uma foto para data/fotos/ e devolve o nome do arquivo criado. */
-async function subirFoto(env, foto, indice) {
-  const extensao = EXTENSOES[foto.tipo];
-  if (!extensao) throw new Error(`formato não aceito: ${foto.tipo}`);
-  if (foto.base64.length > LIMITE_FOTO * 1.4) {
-    throw new Error(`imagem ${indice + 1} é grande demais`);
-  }
-
+/** Sobe um arquivo para dentro de data/ e devolve o nome criado. */
+async function subirArquivo(env, { pasta, extensao, base64 }, indice) {
   // Nome único: duas fotos de celular podem se chamar IMG_1234.jpg e uma
   // sobrescreveria a outra.
   const nome = `${crypto.randomUUID().slice(0, 8)}-${indice + 1}.${extensao}`;
 
-  await github(env, `/contents/data/fotos/${nome}`, {
+  await github(env, `/contents/${pasta}/${nome}`, {
     method: "PUT",
     body: JSON.stringify({
-      message: `chore: foto enviada pelo site (${nome})`,
-      content: foto.base64,
+      message: `chore: arquivo enviado pelo site (${nome})`,
+      content: base64,
     }),
   });
 
   return nome;
+}
+
+/**
+ * Confere formato e tamanho de tudo que veio, ANTES de subir qualquer coisa.
+ *
+ * A ordem importa: recusar no meio do lote deixaria os primeiros arquivos
+ * commitados no repositório sem issue nenhuma apontando para eles — lixo que
+ * ninguém acharia depois.
+ *
+ * Devolve { anexos } ou { erro, status }.
+ */
+function conferirArquivos(fotos, documentos) {
+  const anexos = [];
+
+  for (const [indice, foto] of fotos.entries()) {
+    const extensao = EXTENSOES[String(foto?.tipo || "").toLowerCase()];
+    if (!extensao) {
+      return {
+        erro: `imagem ${indice + 1}: formato não aceito (use JPG, PNG, WEBP ou HEIC)`,
+        status: 415,
+      };
+    }
+    anexos.push({
+      pasta: PASTA_FOTOS,
+      extensao,
+      base64: String(foto.base64 || ""),
+      rotulo: `imagem ${indice + 1}`,
+      limite: LIMITE_FOTO,
+    });
+  }
+
+  for (const [indice, documento] of documentos.entries()) {
+    const extensao = extensaoDocumento(documento);
+    if (!extensao) {
+      const nome = documento?.nome || `documento ${indice + 1}`;
+      return {
+        erro: `${nome}: formato não aceito (use PDF, DOCX, TXT ou MD)`,
+        status: 415,
+      };
+    }
+    anexos.push({
+      pasta: PASTA_DOCUMENTOS,
+      extensao,
+      base64: String(documento.base64 || ""),
+      rotulo: documento?.nome || `documento ${indice + 1}`,
+      limite: LIMITE_DOCUMENTO,
+    });
+  }
+
+  let total = 0;
+  for (const anexo of anexos) {
+    const bytes = bytesDoBase64(anexo.base64);
+    if (bytes > anexo.limite) {
+      return {
+        erro: `${anexo.rotulo} passa de ${emMB(anexo.limite)}`,
+        status: 413,
+      };
+    }
+    total += bytes;
+  }
+
+  if (total > LIMITE_TOTAL) {
+    return {
+      erro: `os arquivos somam mais de ${emMB(LIMITE_TOTAL)}; mande em duas vezes`,
+      status: 413,
+    };
+  }
+
+  return { anexos };
 }
 
 async function criarReceita(request, env) {
@@ -129,26 +233,38 @@ async function criarReceita(request, env) {
   }
 
   const fotos = Array.isArray(corpo.fotos) ? corpo.fotos : [];
-  if (fotos.length > LIMITE_FOTOS) {
-    return json({ erro: `no máximo ${LIMITE_FOTOS} fotos por receita` }, 400);
+  const documentos = Array.isArray(corpo.documentos) ? corpo.documentos : [];
+
+  if (fotos.length + documentos.length > LIMITE_ARQUIVOS) {
+    return json(
+      { erro: `no máximo ${LIMITE_ARQUIVOS} arquivos por receita` },
+      400,
+    );
   }
 
   const texto = String(corpo.conteudo || "").trim();
-  if (!texto && fotos.length === 0) {
-    return json({ erro: "escreva a receita ou anexe uma foto" }, 400);
+  if (!texto && fotos.length === 0 && documentos.length === 0) {
+    return json(
+      { erro: "escreva a receita, anexe uma foto ou mande um documento" },
+      400,
+    );
   }
+
+  const conferido = conferirArquivos(fotos, documentos);
+  if (conferido.erro) return json({ erro: conferido.erro }, conferido.status);
 
   // O Access põe o e-mail de quem entrou neste cabeçalho.
   const autor = request.headers.get("cf-access-authenticated-user-email") || "";
 
   let conteudo = texto;
   try {
-    if (fotos.length) {
+    if (conferido.anexos.length) {
       const nomes = [];
-      for (const [indice, foto] of fotos.entries()) {
-        nomes.push(await subirFoto(env, foto, indice));
+      for (const [indice, anexo] of conferido.anexos.entries()) {
+        nomes.push(await subirArquivo(env, anexo, indice));
       }
-      // O worker local acha esses nomes em data/fotos/ depois de sincronizar.
+      // O worker local acha esses nomes em data/fotos/ e data/documentos/
+      // depois de sincronizar.
       conteudo = [texto, ...nomes].filter(Boolean).join("\n");
     }
 

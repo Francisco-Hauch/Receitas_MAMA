@@ -1,18 +1,10 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import Enviar from "./Enviar.jsx";
 import Lista from "./Lista.jsx";
 import Receita from "./Receita.jsx";
 import { acharReceita } from "./dados.js";
 import { useSessao } from "./sessao.js";
 
-/**
- * Rotas pelo hash da URL (#/0001-pao-de-alho).
- *
- * Sem biblioteca de rota de propósito: hash funciona em qualquer hospedagem
- * estática sem configurar nada no servidor. Com caminho normal, abrir o link
- * direto de uma receita daria 404 até alguém configurar o redirecionamento.
- */
 function useRota() {
   const [rota, setRota] = useState(() => window.location.hash.slice(2));
 
@@ -28,8 +20,27 @@ function useRota() {
 export default function App() {
   const rota = useRota();
   const { sessao, podeEnviar } = useSessao();
-  const enviando = rota === "enviar";
-  const receita = rota && !enviando ? acharReceita(rota) : null;
+  const receita = rota ? acharReceita(rota) : null;
+
+  // Contador de "quero mandar uma receita". Não é rota nem booleano: mandar
+  // duas seguidas precisa levar a pessoa até a zona nas duas vezes.
+  const [chamado, setChamado] = useState(0);
+
+  const chamarEnvio = useCallback(() => {
+    if (window.location.hash !== "#/") window.location.hash = "#/";
+    setChamado((n) => n + 1);
+  }, []);
+
+  /**
+   * #/enviar era uma tela; hoje o envio mora na home. Link antigo, favorito
+   * ou botão de voltar caem aqui e vão para a zona em vez de dar
+   * "receita não encontrada". `replace` para o voltar não ficar em laço.
+   */
+  useEffect(() => {
+    if (rota !== "enviar") return;
+    window.location.replace("#/");
+    setChamado((n) => n + 1);
+  }, [rota]);
 
   // ao abrir uma receita, começa do topo — senão o leitor cai no meio
   useEffect(() => {
@@ -45,9 +56,13 @@ export default function App() {
           </a>
           <div className="topo-acoes">
             {podeEnviar && (
-              <a className="btn btn-ghost" href="#/enviar">
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={chamarEnvio}
+              >
                 mandar receita
-              </a>
+              </button>
             )}
             {sessao?.rotulo && (
               <span className="topo-sessao">
@@ -59,22 +74,7 @@ export default function App() {
       </header>
 
       <main className={receita ? "pagina pagina-receita" : "pagina"}>
-        {enviando ? (
-          podeEnviar ? (
-            <Enviar />
-          ) : (
-            <>
-              <a className="voltar btn btn-ghost" href="#/">
-                ← todas as receitas
-              </a>
-              <h1 className="titulo">Só leitura</h1>
-              <p className="vazio">
-                Este acesso vê as receitas, mas não manda novas. Entre com a
-                senha da família para mandar.
-              </p>
-            </>
-          )
-        ) : rota && !receita ? (
+        {rota && rota !== "enviar" && !receita ? (
           <>
             <a className="voltar btn btn-ghost" href="#/">
               ← todas as receitas
@@ -87,7 +87,7 @@ export default function App() {
         ) : receita ? (
           <Receita receita={receita} />
         ) : (
-          <Lista />
+          <Lista chamado={chamado} />
         )}
       </main>
 

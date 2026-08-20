@@ -35,22 +35,9 @@ function dificuldade(passos) {
   return "Elaborada";
 }
 
-// Placeholders estáticos (demonstração): o back-end ainda não guarda fotos de
-// quem cozinhou nem recados. Ficam marcados como demo até existir suporte real.
+// Placeholder estático (demonstração): o back-end ainda não guarda fotos de
+// quem cozinhou. Fica marcado como demo até existir suporte real.
 const ENVIOS_DEMO = ["Cláudia", "Renato", "Bia", "Dona Alzira"];
-const RECADOS_DEMO = [
-  {
-    autor: "Cláudia",
-    quando: "há 2 dias",
-    texto:
-      "Fiz para o aniversário da minha filha e acabou antes do bolo. Segui à risca e deu certo.",
-  },
-  {
-    autor: "Dona Alzira",
-    quando: "há um mês",
-    texto: "Aprendi o ponto aqui. Mudou tudo, nunca mais errei.",
-  },
-];
 
 export default function Receita({ receita }) {
   const c = receita.complemento;
@@ -279,57 +266,6 @@ export default function Receita({ receita }) {
           </section>
         </>
       )}
-
-      <hr className="hr" />
-
-      <section className="recados">
-        <div className="recados-grid">
-          <div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "baseline",
-                gap: "12px",
-                marginBottom: "4px",
-              }}
-            >
-              <h2 style={{ fontWeight: 400, margin: 0 }}>Recados de quem fez</h2>
-              <span className="demo-selo">demonstração</span>
-            </div>
-            <p className="internet-aviso">
-              Exemplo de como os recados apareceriam — ainda sem envio real.
-            </p>
-            <div>
-              {RECADOS_DEMO.map((r) => (
-                <div className="recado" key={r.autor}>
-                  <div className="recado-cab">
-                    <span className="recado-autor">{r.autor}</span>
-                    <span className="recado-quando">{r.quando}</span>
-                  </div>
-                  <p className="recado-texto">{r.texto}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div>
-            <div className="field" style={{ marginBottom: "12px" }}>
-              <label>Seu nome</label>
-              <input className="busca" placeholder="Como quer aparecer" disabled />
-            </div>
-            <div className="field">
-              <label>Deixe um recado</label>
-              <textarea className="busca" placeholder="Fiz hoje e…" disabled />
-            </div>
-            <button className="enviar btn-block" type="button" disabled>
-              Enviar recado
-            </button>
-            <p className="text-muted" style={{ fontSize: "11.5px", marginTop: "12px" }}>
-              Só a mãe publica receitas. Recados e fotos ficariam com ela para
-              aprovar antes de aparecer.
-            </p>
-          </div>
-        </div>
-      </section>
 
       <footer className="transcricao">
         <p>
