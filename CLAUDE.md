@@ -51,15 +51,21 @@ Design).** Livro de receitas: fundo creme (`#f3f2f2`), tipografia serifada
 (Cormorant Garamond nos títulos, Lora no corpo), um único accent dourado
 (`#b68235`) e fotos com moldura de "prato". Tokens e classes ficam no topo de
 `estilo.css`. **Light-only** (o dark-mode antigo foi removido; o design system
-é mono e claro). Seções sem backend (galeria de fotos enviadas, "recados de
+é mono e claro). Seções sem backend ("Fotos de momentos", "recados de
 quem fez") existem como **placeholders estáticos marcados "demonstração"** até
 haver suporte real.
+
+**Fotos.** Quem manda a receita é a mesma pessoa que tira todas as fotos, então
+foto **não tem autoria** em lugar nenhum do front — nada de "foto de Fulana".
+São *momentos*: de vezes diferentes ou do meio do preparo. A mais recente é a
+que vai grande no topo da receita e no card da lista; as outras ficam na galeria
+da coluna lateral, sem legenda.
 
 | Arquivo | Papel |
 |---|---|
 | `site/src/App.jsx` | Raiz. Roteia por hash entre Lista / Receita / tela de erro. **Não há mais rota de envio**: `#/enviar` (link antigo) troca para `#/`, e "mandar receita" no cabeçalho é botão, não link — incrementa o contador `chamado`, que leva a pessoa até a zona de arraste na home. |
 | `site/src/Lista.jsx` | Página principal: hero, **bloco de envio** (`Enviar`, só para quem pode enviar), busca por nome/ingrediente (sem acento, sem caixa) e filtro por tag. |
-| `site/src/Receita.jsx` | Tela principal. Hero (kicker/tag, título display, resumo, stats tempo/serve/dificuldade). Ingredientes e passos são botões marcáveis (estado some ao sair, de propósito — é sessão de cozinha). Sugestões da internet como card "da internet" ao lado do passo + seção "Dicas da internet" + fontes. Placeholders demo: galeria e recados. |
+| `site/src/Receita.jsx` | Tela principal. Hero (kicker/tag, título display, resumo, stats tempo/serve/dificuldade). Ingredientes e passos são botões marcáveis (estado some ao sair, de propósito — é sessão de cozinha). Sugestões da internet como card "da internet" ao lado do passo + seção "Dicas da internet" + fontes. Placeholders demo na lateral: "Fotos de momentos" (galeria sem legenda; a zona de arraste só aparece para quem pode enviar) e recados. |
 | `site/src/Enviar.jsx` | Bloco de envio da home (não é tela). Zona de arraste: o arquivo é que decide o tipo (imagem → foto, PDF/.docx/.txt/.md → documento); aceito o arquivo, abre o pop-up com nome e observações → `POST /api/receita`. Digitar a receita e mandar link são atalhos abaixo da zona, no mesmo pop-up. Recusa (tipo desconhecido, foto misturada com documento, limite de tamanho) acontece antes de abrir o pop-up. |
 | `site/src/dados.js` | Lê e indexa os JSONs; liga receita ↔ complemento pelo número da issue. |
 | `site/src/sessao.js` | Pergunta `/api/sessao` só para decidir o que mostrar. Segurança de verdade é no Worker. |

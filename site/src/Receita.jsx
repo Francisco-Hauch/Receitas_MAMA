@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 
 import { receitas } from "./dados.js";
+import { useSessao } from "./sessao.js";
 
 /** Marcar ingrediente usado / passo feito. Some ao sair da página, de propósito:
  *  é para uma sessão de cozinha, não é estado que valha guardar. */
@@ -35,12 +36,18 @@ function dificuldade(passos) {
   return "Elaborada";
 }
 
-// Placeholder estático (demonstração): o back-end ainda não guarda fotos de
-// quem cozinhou. Fica marcado como demo até existir suporte real.
-const ENVIOS_DEMO = ["Cláudia", "Renato", "Bia", "Dona Alzira"];
+// Placeholder estático (demonstração): o back-end ainda não guarda as fotos do
+// preparo. Quantas molduras vazias a galeria mostra enquanto isso.
+//
+// Sem autoria de propósito: quem manda a receita é a mesma pessoa que tira
+// todas as fotos, então nome embaixo de cada uma não diria nada. São momentos —
+// de vezes diferentes ou do meio do preparo —, e a mais recente é a que vai
+// para o topo desta página e para o card na lista.
+const MOMENTOS_DEMO = 4;
 
 export default function Receita({ receita }) {
   const c = receita.complemento;
+  const { podeEnviar } = useSessao();
 
   const [usados, alternarUsado] = useMarcados();
   const [feitos, alternarFeito] = useMarcados();
@@ -176,20 +183,21 @@ export default function Receita({ receita }) {
         </div>
 
         <aside className="receita-lado">
-          <h6 className="secao-titulo">Últimas fotos enviadas</h6>
-          <div className="demo-zona" aria-hidden="true" style={{ minHeight: 84 }}>
-            <div className="text-muted" style={{ fontSize: "12px" }}>
-              Arraste aqui a foto do seu prato
+          <h6 className="secao-titulo">Fotos de momentos</h6>
+          <p className="secao-lede">
+            De vezes diferentes ou do meio do preparo. A mais recente é a que
+            aparece grande aqui em cima e no card da lista.
+          </p>
+          {podeEnviar && (
+            <div className="demo-zona demo-zona-compacta">
+              <div className="text-muted" style={{ fontSize: "12px" }}>
+                Arraste aqui as fotos deste preparo
+              </div>
             </div>
-          </div>
-          <div className="galeria">
-            {ENVIOS_DEMO.map((nome) => (
-              <figure key={nome}>
-                <div className="plate">
-                  <span className="plate-ph">{nome[0]}</span>
-                </div>
-                <figcaption>Foto de {nome}</figcaption>
-              </figure>
+          )}
+          <div className="galeria" aria-hidden="true">
+            {Array.from({ length: MOMENTOS_DEMO }, (_, i) => (
+              <div className="plate" key={i} />
             ))}
           </div>
           <p style={{ marginTop: "10px" }}>
