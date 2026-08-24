@@ -18,6 +18,16 @@ const complementosCrus = import.meta.glob("../../data/complementos/*.json", {
   import: "default",
 });
 
+/**
+ * As fotos entram no build do mesmo jeito, mas o que volta é a URL do arquivo
+ * (o Vite copia para `assets/` com hash no nome) — não o conteúdo.
+ */
+const fotosCruas = import.meta.glob("../../data/fotos/*.{png,jpg,jpeg,webp}", {
+  eager: true,
+  import: "default",
+  query: "?url",
+});
+
 /** "../../data/receitas/0001-pasta-de-alho.json" -> "0001-pasta-de-alho" */
 function idDoCaminho(caminho) {
   return caminho.split("/").pop().replace(/\.json$/, "");
@@ -29,12 +39,39 @@ const porIssue = new Map(
   Object.values(complementosCrus).map((c) => [c.issue, c]),
 );
 
+/**
+ * Indexa as fotos pelo número que abre o nome do arquivo — `0003-2.png` é a
+ * segunda foto da receita `0003-…`. É o número da issue com zeros à esquerda,
+ * então a ligação sobrevive a mudança de título.
+ *
+ * Ordem: número maior é foto mais recente e vem primeiro. Quem chama conta com
+ * isso — `fotos[0]` é a que vai grande no topo da receita e no card da lista.
+ */
+const fotosPorPrefixo = new Map();
+for (const [caminho, url] of Object.entries(fotosCruas)) {
+  const nome = caminho.split("/").pop();
+  const partes = nome.match(/^(\d+)-(\d+)\./);
+  if (!partes) continue;
+  const [, prefixo, ordem] = partes;
+  const lista = fotosPorPrefixo.get(prefixo) ?? [];
+  lista.push({ url, ordem: Number(ordem), id: nome });
+  fotosPorPrefixo.set(prefixo, lista);
+}
+for (const lista of fotosPorPrefixo.values()) {
+  lista.sort((a, b) => b.ordem - a.ordem);
+}
+
 export const receitas = Object.entries(receitasCruas)
-  .map(([caminho, receita]) => ({
-    ...receita,
-    id: idDoCaminho(caminho),
-    complemento: porIssue.get(receita.issue) ?? null,
-  }))
+  .map(([caminho, receita]) => {
+    const id = idDoCaminho(caminho);
+    return {
+      ...receita,
+      id,
+      complemento: porIssue.get(receita.issue) ?? null,
+      // sempre array: a lista e a receita iteram sem checar nulo antes
+      fotos: fotosPorPrefixo.get(id.split("-")[0]) ?? [],
+    };
+  })
   .sort((a, b) => a.titulo.localeCompare(b.titulo, "pt-BR"));
 
 export const tags = [...new Set(receitas.flatMap((r) => r.tags))].sort((a, b) =>

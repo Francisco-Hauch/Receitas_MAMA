@@ -57,6 +57,29 @@
   --shadow-lg: 0 12px 32px color-mix(in srgb, #2d2b2b 22%, transparent);
 
   --largura: 1080px;
+
+  /* ---------------------------------------------------------- movimento --
+   * Os mesmos valores existem em `movimento.js` (em segundos, que é o que a
+   * Motion usa). Aqui ficam em ms, para o que é animado por folha de estilo.
+   * Mudar de um lado exige mudar do outro.
+   *
+   * Nome da curva pelo que ela *parece*, não pela fórmula: `papel` entra e
+   * assenta, `tinta` é simétrica para trocas, `colher` passa do ponto e volta.
+   */
+  --mov-instante: 120ms;
+  --mov-rapido: 220ms;
+  --mov-medio: 420ms;
+  --mov-lento: 720ms;
+  --mov-cena: 1100ms;
+
+  --ease-papel: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-tinta: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-colher: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --ease-saida: cubic-bezier(0.4, 0, 1, 1);
+
+  --mov-sobe: 18px;
+  --mov-sobe-hero: 34px;
+  --mov-escalonar: 65ms;
 }
 
 *,
@@ -109,8 +132,19 @@ a:hover { color: var(--color-accent-700); }
 }
 ::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
 
+/* Quem pediu menos movimento no sistema recebe o site parado. Isto cobre o que
+ * é CSS; o que é JavaScript é desligado pelo `<MotionConfig reducedMotion>` no
+ * App.jsx e pelos `useReducedMotion()` espalhados. Os dois são necessários: a
+ * Motion escreve transform inline, que `transition: none` não alcança. */
 @media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition: none !important; }
+  * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation: none !important; }
 }
 
 .text-muted { color: color-mix(in srgb, var(--color-text) 55%, transparent); }
@@ -160,6 +194,7 @@ a:hover { color: var(--color-accent-700); }
 
 /* — moldura de prato (fotos) — */
 .plate {
+  position: relative;
   filter: sepia(0.22) saturate(0.82) contrast(1.05);
   border: 6px solid var(--color-surface);
   outline: 1px solid var(--color-divider);
@@ -389,6 +424,8 @@ button.tag[aria-pressed="true"] {
 .entrada-corpo { padding: 14px 2px 0; }
 .entrada-tags { display: flex; gap: 8px; margin-bottom: 8px; }
 .entrada-titulo {
+  position: relative;
+  display: inline-block;
   font-family: var(--font-heading);
   font-weight: var(--font-heading-weight);
   font-size: 22px;
@@ -510,7 +547,7 @@ button.tag[aria-pressed="true"] {
 }
 .ingrediente {
   display: grid;
-  grid-template-columns: 82px 1fr;
+  grid-template-columns: 82px 1fr auto;
   gap: 14px;
   align-items: baseline;
   padding: 9px 0;
@@ -531,12 +568,17 @@ button.tag[aria-pressed="true"] {
   color: color-mix(in srgb, var(--color-text) 55%, transparent);
   font-variant-numeric: tabular-nums;
 }
+/* o risco é desenhado (ver `.risco`), não é text-decoration: a linha cresce da
+ * esquerda para a direita quando a pessoa marca — parece riscado à mão, não
+ * parece que o texto foi trocado por outro */
 .ingrediente[data-usado="true"] .quantidade,
 .ingrediente[data-usado="true"] .item {
   color: color-mix(in srgb, var(--color-text) 40%, transparent);
-  text-decoration: line-through;
-  text-decoration-thickness: 1px;
+  transition: color var(--mov-medio) var(--ease-papel);
 }
+/* `fit-content` para o risco parar onde a palavra para: com a célula em `1fr`
+ * a linha atravessaria a coluna inteira e riscaria o vazio depois do texto */
+.ingrediente .item { position: relative; width: fit-content; max-width: 100%; }
 
 /* ---------------------------------------------------------------- passos */
 .passos {
@@ -569,9 +611,10 @@ button.tag[aria-pressed="true"] {
   cursor: pointer;
   padding: 0;
 }
-.passo-corpo::before {
-  counter-increment: passo;
-  content: counter(passo, decimal-leading-zero);
+/* o número do passo virou elemento de verdade (`.passo-num`) porque agora ele
+ * anima: encolhe e vira dourado quando o passo é dado. Pseudo-elemento de
+ * counter não dá para animar por JavaScript. */
+.passo-num {
   font-family: var(--font-heading);
   font-size: 28px;
   line-height: 1;
@@ -579,6 +622,7 @@ button.tag[aria-pressed="true"] {
   font-variant-numeric: tabular-nums;
 }
 .passo-texto {
+  position: relative;
   font-size: 14px;
   line-height: 1.72;
   text-align: justify;
@@ -586,8 +630,7 @@ button.tag[aria-pressed="true"] {
 }
 .passo-corpo[data-feito="true"] .passo-texto {
   color: color-mix(in srgb, var(--color-text) 45%, transparent);
-  text-decoration: line-through;
-  text-decoration-thickness: 1px;
+  transition: color var(--mov-lento) var(--ease-papel);
 }
 
 /* nota "da internet" ao lado do passo (o card de recomendação do mockup) */
@@ -976,4 +1019,378 @@ input[type="file"].busca { padding: 8px; font-size: 13px; }
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     padding: var(--space-4);
   }
+}
+
+/* ================================================================ movimento
+ *
+ * Tudo daqui para baixo é a camada de movimento do sistema. A separação é
+ * intencional: apagar este bloco devolve o site estático de antes, sem quebrar
+ * layout nenhum. O que é animado por JavaScript mora em `movimento.js`.
+ *
+ * Regra de leitura: entra subindo e clareando (`--ease-papel`), sai encolhendo
+ * e rápido (`--ease-saida`). Distância curta — 18px é o padrão. Movimento
+ * grande em tipografia serifada lê como instabilidade, não como energia.
+ */
+
+/* -------------------------------------------------- entrada de página */
+/* Roda a cada montagem do <main> (a `key` no App.jsx troca a cada rota).
+ * Nos navegadores com View Transitions, isto acontece *dentro* do snapshot
+ * novo, enquanto a foto compartilhada morfa por cima. */
+@keyframes pagina-entra {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* `backwards`, nunca `both`: com `both` o transform final (translateY(0)) fica
+ * grudado no elemento para sempre, e um transform no <main> vira bloco de
+ * contenção — todo `position: fixed` de dentro (o visor de foto em tela cheia)
+ * passa a se posicionar em relação ao main em vez da janela. Levou a um visor
+ * que abria dentro da coluna de texto. `backwards` some com o transform assim
+ * que a animação termina. */
+.pagina { animation: pagina-entra var(--mov-lento) var(--ease-papel) backwards; }
+
+/* A View Transition serve para *uma* coisa aqui: a foto do card virar a foto do
+ * topo da receita. O resto da página não deve dissolver junto — dissolver o
+ * texto inteiro durante 600ms deixa dois títulos legíveis ao mesmo tempo e a
+ * leitura trava. Por isso o grupo `root` fica parado e só os nomes próprios
+ * (`foto-<id>`, ver Galeria.jsx) animam. */
+/* primeiro a régra geral: todo elemento com nome próprio morfa devagar... */
+::view-transition-group(*),
+::view-transition-old(*),
+::view-transition-new(*) {
+  animation-duration: var(--mov-lento);
+  animation-timing-function: var(--ease-papel);
+}
+/* ...e depois `root` — que também casa com `*` — é desligado. A ordem é o que
+ * faz a exceção valer; invertida, o grupo geral reativaria a dissolução. */
+::view-transition-old(root),
+::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+
+/* ------------------------------------------- fio de progresso de leitura */
+.progresso-leitura {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 60;
+  height: 2px;
+  transform-origin: 0 50%;
+  background: linear-gradient(
+    90deg,
+    var(--color-accent-300),
+    var(--color-accent),
+    var(--color-accent-700)
+  );
+}
+
+/* ------------------------------------------------ revelação de título */
+/* A palavra sobe de dentro de uma janela que corta o que passa da linha. É o
+ * efeito de tipo saindo de trás do papel. `.mascara` precisa ser inline-flex e
+ * não `inline-block` para não herdar o baseline e cortar descendente de "g". */
+.mascara-linha { display: block; }
+.mascara {
+  display: inline-flex;
+  overflow: hidden;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+.mascara + .mascara { margin-left: 0.26em; }
+.mascara-alvo { display: inline-block; will-change: transform; }
+
+/* --------------------------------------------------------------- fotos */
+.plate-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Ken Burns: 22s por ciclo, ida e volta. Lento a este ponto ninguém "vê"
+ * acontecendo — só percebe que a foto não está morta. */
+@keyframes ken-burns {
+  from { transform: scale(1.04) translate3d(0, 0, 0); }
+  to   { transform: scale(1.13) translate3d(-1.6%, -1.8%, 0); }
+}
+.ken-burns { animation: ken-burns 22s var(--ease-tinta) infinite alternate; }
+
+.plate-viva { cursor: default; }
+
+/* reflexo que segue o ponteiro: dá volume de louça à moldura chapada */
+.plate-brilho {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 150%;
+  height: 150%;
+  margin: -75% 0 0 -75%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at center,
+    color-mix(in srgb, #fff 34%, transparent),
+    transparent 62%
+  );
+  mix-blend-mode: soft-light;
+}
+
+/* o botão cobre a foto inteira: a área de clique é a imagem, não um ícone de
+ * 24px que ninguém acerta no celular */
+.plate-abrir {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 10px;
+}
+.plate-lupa {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  font-size: 14px;
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-bg) 86%, transparent);
+  box-shadow: var(--shadow-sm);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity var(--mov-rapido) var(--ease-papel),
+              transform var(--mov-rapido) var(--ease-papel);
+}
+.plate-abrir:hover .plate-lupa,
+.plate-abrir:focus-visible .plate-lupa { opacity: 1; transform: translateY(0); }
+
+.plate-relogio {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px 3px 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-bg) 84%, transparent);
+  pointer-events: none;
+}
+.plate-conta {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--color-text) 70%, transparent);
+}
+.anel { transform: rotate(-90deg); }
+.anel-trilho, .anel-arco { fill: none; stroke-width: 2; }
+.anel-trilho { stroke: var(--color-divider); }
+.anel-arco { stroke: var(--color-accent); stroke-linecap: round; }
+
+.plate-selo {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-bg) 84%, transparent);
+}
+
+/* zoom lento na foto do card enquanto o ponteiro está em cima */
+.plate-zoom { transition: transform var(--mov-cena) var(--ease-papel); }
+.entrada:hover .plate-zoom { transform: scale(1.07); }
+
+.entrada-moldura { position: relative; }
+/* sombra que nasce embaixo do card no hover, como prato levantado da mesa */
+.entrada-moldura::after {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -10px;
+  height: 16px;
+  border-radius: 50%;
+  background: color-mix(in srgb, #2d2b2b 22%, transparent);
+  filter: blur(9px);
+  opacity: 0;
+  transition: opacity var(--mov-medio) var(--ease-papel);
+}
+.entrada:hover .entrada-moldura::after { opacity: 1; }
+
+/* miniaturas da coluna lateral */
+.galeria-viva {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+.plate-mini {
+  padding: 0;
+  cursor: zoom-in;
+  width: 100%;
+  height: 86px;
+}
+
+/* --------------------------------------------------------------- visor */
+.visor {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(16px, 5vw, 64px);
+  cursor: zoom-out;
+  background: color-mix(in srgb, #201f1d 82%, transparent);
+  backdrop-filter: blur(10px) saturate(0.9);
+}
+.visor-foto {
+  max-width: min(1100px, 92vw);
+  max-height: 84vh;
+  object-fit: contain;
+  cursor: grab;
+  border: 8px solid var(--color-surface);
+  box-shadow: var(--shadow-lg);
+  touch-action: pan-y;
+}
+.visor-foto:active { cursor: grabbing; }
+.visor-conta {
+  position: absolute;
+  bottom: clamp(14px, 4vw, 34px);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, #f3f2f2 75%, transparent);
+}
+.visor-fechar {
+  position: absolute;
+  top: clamp(10px, 3vw, 26px);
+  right: clamp(10px, 3vw, 26px);
+  width: 42px;
+  height: 42px;
+  border: 1px solid color-mix(in srgb, #f3f2f2 28%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: #f3f2f2;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.visor-fechar:hover { background: color-mix(in srgb, #f3f2f2 14%, transparent); }
+
+/* ------------------------------------------------------------- busca */
+.busca-caixa { position: relative; }
+/* fio dourado que cresce do centro quando o campo recebe foco */
+.busca-fio {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--color-accent);
+  transform: scaleX(0);
+  transition: transform var(--mov-medio) var(--ease-papel);
+  pointer-events: none;
+}
+.busca-caixa:focus-within .busca-fio { transform: scaleX(1); }
+
+/* --------------------------------------------------------------- tags */
+/* a marca do filtro ativo é um elemento só, remedido pela Motion — por isso
+ * o contorno de antes (box-shadow inset) sai: seriam duas marcas */
+button.tag { position: relative; overflow: hidden; }
+button.tag[aria-pressed="true"] { box-shadow: none; }
+.tag-marca {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  border: 1px solid var(--color-accent);
+}
+.tag-texto { position: relative; }
+
+/* -------------------------------------------------------------- cards */
+.entrada-fio {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1px;
+  background: var(--color-accent);
+  transform-origin: 0 50%;
+}
+.entrada-seta { margin-left: auto; color: var(--color-accent); }
+
+/* contagem de resultados: o número roda, o rótulo fica */
+.conta { display: inline-flex; align-items: baseline; gap: 0.32em; }
+.conta-num {
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------- ficha do topo */
+.contador { display: inline-flex; align-items: baseline; gap: 0.28em; }
+.contador-num { font-variant-numeric: tabular-nums; }
+.contador-sufixo { font-size: 0.72em; }
+
+/* ------------------------------------------- riscar ingrediente / passo */
+/* linha desenhada em cima do texto. `scaleX` vem da Motion; aqui só a régua. */
+.risco {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0.62em;
+  height: 1px;
+  background: color-mix(in srgb, var(--color-text) 45%, transparent);
+  transform-origin: 0 50%;
+  pointer-events: none;
+}
+/* no passo o texto tem várias linhas: riscar tudo ficaria ilegível, então a
+ * marca é uma barra dourada na lateral, não um traço no meio das palavras */
+.risco-passo {
+  left: -14px;
+  right: auto;
+  top: 0.2em;
+  bottom: 0.2em;
+  width: 2px;
+  height: auto;
+  background: var(--color-accent);
+  transform-origin: 50% 0;
+}
+.ingrediente-marca {
+  align-self: center;
+  font-size: 12px;
+  color: var(--color-accent);
+}
+
+/* ------------------------------------------------ progresso da cozinha */
+.progresso { overflow: hidden; }
+.progresso-linha {
+  height: 2px;
+  background: var(--color-divider);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progresso-barra {
+  height: 100%;
+  background: var(--color-accent);
+  transform-origin: 0 50%;
+}
+.progresso-texto {
+  margin-top: 7px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+.progresso-pronto { color: var(--color-accent); }
+
+/* ---------------------------------------------------------- responsivo */
+@media (max-width: 620px) {
+  /* no celular a foto do topo é a primeira coisa da tela: o relógio do
+   * carrossel fica menor para não competir com ela */
+  .plate-relogio { transform: scale(0.9); transform-origin: top left; }
+  .visor-foto { border-width: 5px; }
+  /* a lupa não tem hover no dedo — fica sempre visível, discreta */
+  .plate-lupa { opacity: 0.85; transform: none; }
 }
