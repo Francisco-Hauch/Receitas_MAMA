@@ -1,6 +1,16 @@
 import { useMemo, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
+import {
+  FotoDestaque,
+  GradeDeFotos,
+  ProvedorDeFotos,
+  useFotos,
+} from "./Galeria.jsx";
+import { Regua } from "./Lista.jsx";
+import { Contador, ItemRevelado, ListaRevelada, Revelar, TituloRevelado } from "./Revelar.jsx";
 import { receitas } from "./dados.js";
+import { DUR, EASE, MOLA, MOLA_MACIA, subir, useEntrada } from "./movimento.js";
 import { useSessao } from "./sessao.js";
 
 /** Marcar ingrediente usado / passo feito. Some ao sair da página, de propósito:
@@ -36,18 +46,21 @@ function dificuldade(passos) {
   return "Elaborada";
 }
 
-// Placeholder estático (demonstração): o back-end ainda não guarda as fotos do
-// preparo. Quantas molduras vazias a galeria mostra enquanto isso.
-//
-// Sem autoria de propósito: quem manda a receita é a mesma pessoa que tira
-// todas as fotos, então nome embaixo de cada uma não diria nada. São momentos —
-// de vezes diferentes ou do meio do preparo —, e a mais recente é a que vai
-// para o topo desta página e para o card na lista.
+// Quantas molduras vazias a galeria mostra enquanto a receita não tem foto.
 const MOMENTOS_DEMO = 4;
 
 export default function Receita({ receita }) {
+  return (
+    <ProvedorDeFotos fotos={receita.fotos}>
+      <CorpoDaReceita receita={receita} />
+    </ProvedorDeFotos>
+  );
+}
+
+function CorpoDaReceita({ receita }) {
   const c = receita.complemento;
   const { podeEnviar } = useSessao();
+  const { fotos } = useFotos();
 
   const [usados, alternarUsado] = useMarcados();
   const [feitos, alternarFeito] = useMarcados();
@@ -66,15 +79,15 @@ export default function Receita({ receita }) {
 
   // Ficha do topo: valor real (da mamãe) ou, na falta, o que a internet sugeriu.
   const tempo = receita.tempo_min
-    ? [`${receita.tempo_min} min`, false]
+    ? [receita.tempo_min, "min", false]
     : c?.tempo_min
-      ? [`${c.tempo_min} min`, true]
-      : ["—", false];
+      ? [c.tempo_min, "min", true]
+      : [null, "", false];
   const serve = receita.porcoes
-    ? [`${receita.porcoes} porções`, false]
+    ? [receita.porcoes, "porções", false]
     : c?.porcoes
-      ? [`${c.porcoes} porções`, true]
-      : ["—", false];
+      ? [c.porcoes, "porções", true]
+      : [null, "", false];
 
   const outras = useMemo(
     () => receitas.filter((r) => r.id !== receita.id).slice(0, 4),
@@ -89,136 +102,155 @@ export default function Receita({ receita }) {
 
   return (
     <article className="receita">
-      <a className="voltar btn btn-ghost" href="#/">
+      <motion.a
+        className="voltar btn btn-ghost"
+        href="#/"
+        whileHover={{ x: -4 }}
+        transition={MOLA}
+      >
         ← todas as receitas
-      </a>
+      </motion.a>
 
       <div className="receita-hero">
         <div>
-          <div className="kicker">{receita.tags[0] ?? "Receita da casa"}</div>
-          <h1 className="titulo">{receita.titulo}</h1>
-          {receita.notas && <p className="receita-resumo">{receita.notas}</p>}
-          <div className="stats">
-            <div>
-              <div className="stat-rotulo">Tempo</div>
-              <div className={`stat-valor${tempo[1] ? " sugerido" : ""}`}>
-                {tempo[0]}
-              </div>
-            </div>
-            <div>
-              <div className="stat-rotulo">Serve</div>
-              <div className={`stat-valor${serve[1] ? " sugerido" : ""}`}>
-                {serve[0]}
-              </div>
-            </div>
-            <div>
-              <div className="stat-rotulo">Dificuldade</div>
-              <div className="stat-valor">{dificuldade(receita.passos)}</div>
-            </div>
+          <motion.div
+            className="kicker"
+            initial={{ opacity: 0, letterSpacing: "0.32em" }}
+            animate={{ opacity: 1, letterSpacing: "0.16em" }}
+            transition={{ duration: 1, ease: EASE.papel }}
+          >
+            {receita.tags[0] ?? "Receita da casa"}
+          </motion.div>
+
+          <TituloRevelado
+            className="titulo"
+            texto={receita.titulo}
+            atraso={0.08}
+          />
+
+          {receita.notas && (
+            <motion.p
+              className="receita-resumo"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: DUR.lento, ease: EASE.papel, delay: 0.4 }}
+            >
+              {receita.notas}
+            </motion.p>
+          )}
+
+          <motion.div
+            className="stats"
+            initial="oculto"
+            animate="visivel"
+            variants={{
+              visivel: { transition: { delayChildren: 0.5, staggerChildren: 0.08 } },
+            }}
+          >
+            <Estatistica rotulo="Tempo" valor={tempo[0]} sufixo={tempo[1]} sugerido={tempo[2]} />
+            <Estatistica rotulo="Serve" valor={serve[0]} sufixo={serve[1]} sugerido={serve[2]} />
+            <Estatistica rotulo="Dificuldade" texto={dificuldade(receita.passos)} />
             {c?.temperatura_c && (
-              <div>
-                <div className="stat-rotulo">Forno</div>
-                <div className="stat-valor sugerido">{c.temperatura_c} °C</div>
-              </div>
+              <Estatistica rotulo="Forno" valor={c.temperatura_c} sufixo="°C" sugerido />
             )}
-          </div>
+          </motion.div>
         </div>
-        <div className="plate receita-foto">
-          <span className="plate-ph">{receita.titulo}</span>
-        </div>
+
+        <FotoDestaque receita={receita} className="receita-foto" />
       </div>
 
-      <hr className="hr" />
+      <Regua />
 
       <div className="receita-grid">
         <div className="receita-main">
-          <h6 className="secao-titulo">
+          <Revelar como="h6" className="secao-titulo">
             Ingredientes · {receita.ingredientes.length} itens
-          </h6>
-          <ul className="ingredientes">
-            {receita.ingredientes.map((ing, i) => (
-              <li key={i}>
-                <button
-                  type="button"
-                  className="ingrediente"
-                  data-usado={usados.has(i)}
-                  aria-pressed={usados.has(i)}
-                  onClick={() => alternarUsado(i)}
-                >
-                  <span className="quantidade">{quantidade(ing)}</span>
-                  <span className="item">{ing.bruto}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
+          </Revelar>
 
-          <h6 className="secao-titulo">
+          <ListaRevelada como="ul" className="ingredientes" intervalo={0.045}>
+            {receita.ingredientes.map((ing, i) => (
+              <ItemRevelado como="li" key={i}>
+                <Ingrediente
+                  texto={quantidade(ing)}
+                  item={ing.bruto}
+                  usado={usados.has(i)}
+                  aoAlternar={() => alternarUsado(i)}
+                />
+              </ItemRevelado>
+            ))}
+          </ListaRevelada>
+
+          <Revelar como="h6" className="secao-titulo">
             Modo de preparo · {receita.passos.length} passos
-          </h6>
-          <p className="secao-lede">
+          </Revelar>
+          <Revelar como="p" className="secao-lede" atraso={0.06}>
             Ao lado de cada etapa, o que a internet costuma recomendar.
-          </p>
+          </Revelar>
+
+          <Progresso feitos={feitos.size} total={receita.passos.length} />
+
           <ol className="passos">
             {receita.passos.map((passo, i) => (
-              <li className="passo" key={i}>
-                <button
-                  type="button"
-                  className="passo-corpo"
-                  data-feito={feitos.has(i)}
-                  aria-pressed={feitos.has(i)}
-                  onClick={() => alternarFeito(i)}
-                >
-                  <span className="passo-texto">{passo}</span>
-                </button>
-
-                {notasPorPasso.has(i) && (
-                  <aside className="nota">
-                    <span className="nota-rotulo">da internet</span>
-                    <p className="nota-texto">{notasPorPasso.get(i)}</p>
-                  </aside>
-                )}
-              </li>
+              <Passo
+                key={i}
+                indice={i}
+                texto={passo}
+                nota={notasPorPasso.get(i)}
+                feito={feitos.has(i)}
+                aoAlternar={() => alternarFeito(i)}
+              />
             ))}
           </ol>
         </div>
 
         <aside className="receita-lado">
-          <h6 className="secao-titulo">Fotos de momentos</h6>
-          <p className="secao-lede">
+          <Revelar como="h6" className="secao-titulo">
+            Fotos de momentos
+          </Revelar>
+          <Revelar como="p" className="secao-lede" atraso={0.05}>
             De vezes diferentes ou do meio do preparo. A mais recente é a que
             aparece grande aqui em cima e no card da lista.
-          </p>
+          </Revelar>
+
           {podeEnviar && (
-            <div className="demo-zona demo-zona-compacta">
+            <motion.div
+              className="demo-zona demo-zona-compacta"
+              whileHover={{ borderColor: "var(--color-accent)", y: -2 }}
+              transition={MOLA}
+            >
               <div className="text-muted" style={{ fontSize: "12px" }}>
                 Arraste aqui as fotos deste preparo
               </div>
-            </div>
+            </motion.div>
           )}
-          <div className="galeria" aria-hidden="true">
-            {Array.from({ length: MOMENTOS_DEMO }, (_, i) => (
-              <div className="plate" key={i} />
-            ))}
-          </div>
-          <p style={{ marginTop: "10px" }}>
-            <span className="demo-selo">demonstração</span>
-          </p>
+
+          <GradeDeFotos vazias={MOMENTOS_DEMO} />
+
+          {/* o selo de demonstração só faz sentido enquanto não há foto de
+              verdade: com foto, a galeria é real e o selo mentiria */}
+          {fotos.length === 0 && (
+            <p style={{ marginTop: "10px" }}>
+              <span className="demo-selo">demonstração</span>
+            </p>
+          )}
 
           {outras.length > 0 && (
             <>
-              <hr className="hr" />
-              <h6 className="secao-titulo">Nesta cozinha também</h6>
-              <div className="outras">
+              <Regua />
+              <Revelar como="h6" className="secao-titulo">
+                Nesta cozinha também
+              </Revelar>
+              <ListaRevelada className="outras">
                 {outras.map((o) => {
                   const t = o.tempo_min ?? o.complemento?.tempo_min ?? null;
                   return (
-                    <a className="outra" key={o.id} href={`#/${o.id}`}>
+                    <ItemRevelado key={o.id} como="a" className="outra" href={`#/${o.id}`}>
                       <span className="outra-titulo">{o.titulo}</span>
                       {t && <span className="outra-tempo">{t} min</span>}
-                    </a>
+                    </ItemRevelado>
                   );
                 })}
-              </div>
+              </ListaRevelada>
             </>
           )}
         </aside>
@@ -226,39 +258,46 @@ export default function Receita({ receita }) {
 
       {temSugestoes && (
         <>
-          <hr className="hr" />
+          <Regua />
           <section className="internet">
-            <h2 className="internet-titulo">Dicas da internet</h2>
-            <p className="internet-aviso">
+            <Revelar como="h2" className="internet-titulo">
+              Dicas da internet
+            </Revelar>
+            <Revelar como="p" className="internet-aviso" atraso={0.06}>
               Nada aqui faz parte da receita original. Veio de busca na web e
               pode estar errado.
-            </p>
+            </Revelar>
 
             {c.ingredientes_ausentes?.length > 0 && (
-              <ul className="sugestoes">
+              <ListaRevelada como="ul" className="sugestoes">
                 {c.ingredientes_ausentes.map((ing) => (
-                  <li key={ing.item}>
+                  <ItemRevelado como="li" key={ing.item}>
                     <strong>{ing.item}</strong> — {ing.motivo}
-                  </li>
+                  </ItemRevelado>
                 ))}
-              </ul>
+              </ListaRevelada>
             )}
 
             {c.dicas?.length > 0 && (
-              <div className="dicas-grid">
+              <ListaRevelada className="dicas-grid" intervalo={0.08}>
                 {c.dicas.map((dica) => (
-                  <div className="card dica-card" key={dica}>
+                  <ItemRevelado
+                    className="card dica-card"
+                    key={dica}
+                    whileHover={{ y: -4, borderColor: "var(--color-accent)" }}
+                    transition={MOLA}
+                  >
                     <div className="card-kicker">da internet</div>
                     <p className="dica-texto">{dica}</p>
-                  </div>
+                  </ItemRevelado>
                 ))}
-              </div>
+              </ListaRevelada>
             )}
 
             {c.fontes?.length > 0 && (
-              <ul className="fontes">
+              <ListaRevelada como="ul" className="fontes">
                 {c.fontes.map((f) => (
-                  <li key={f.url}>
+                  <ItemRevelado como="li" key={f.url}>
                     {f.aviso && (
                       <span className="nao-verificada" title={f.aviso}>
                         não verificada
@@ -267,9 +306,9 @@ export default function Receita({ receita }) {
                     <a href={f.url} target="_blank" rel="noreferrer noopener">
                       {f.titulo || f.url}
                     </a>
-                  </li>
+                  </ItemRevelado>
                 ))}
-              </ul>
+              </ListaRevelada>
             )}
           </section>
         </>
@@ -283,5 +322,184 @@ export default function Receita({ receita }) {
         </p>
       </footer>
     </article>
+  );
+}
+
+/* ------------------------------------------------------------- peças */
+
+/** Uma coluna da ficha do topo. Número conta até o valor; texto só aparece. */
+function Estatistica({ rotulo, valor = null, sufixo = "", texto, sugerido = false }) {
+  return (
+    <motion.div variants={subir}>
+      <div className="stat-rotulo">{rotulo}</div>
+      <div className={`stat-valor${sugerido ? " sugerido" : ""}`}>
+        {texto ?? (valor == null ? "—" : <Contador valor={valor} sufixo={sufixo} />)}
+      </div>
+    </motion.div>
+  );
+}
+
+/**
+ * Item da lista de ingredientes.
+ *
+ * O risco não é `text-decoration`: é uma linha que **cresce** da esquerda para
+ * a direita quando a pessoa marca, e recolhe quando desmarca. A diferença é o
+ * que faz parecer riscado à mão em vez de trocado por outro texto.
+ */
+function Ingrediente({ texto, item, usado, aoAlternar }) {
+  return (
+    <motion.button
+      type="button"
+      className="ingrediente"
+      data-usado={usado}
+      aria-pressed={usado}
+      onClick={aoAlternar}
+      whileHover={{ x: 3 }}
+      whileTap={{ scale: 0.99 }}
+      transition={MOLA}
+    >
+      <span className="quantidade">{texto}</span>
+      <span className="item">
+        {item}
+        <motion.span
+          className="risco"
+          aria-hidden="true"
+          initial={false}
+          animate={{ scaleX: usado ? 1 : 0 }}
+          style={{ originX: 0 }}
+          transition={{ duration: DUR.medio, ease: EASE.papel }}
+        />
+      </span>
+      <motion.span
+        className="ingrediente-marca"
+        aria-hidden="true"
+        initial={false}
+        animate={{ scale: usado ? 1 : 0, opacity: usado ? 1 : 0 }}
+        transition={MOLA}
+      >
+        ✓
+      </motion.span>
+    </motion.button>
+  );
+}
+
+/**
+ * Um passo do preparo. Entra com a rolagem; a nota da internet chega logo
+ * depois, vindo da direita — a ordem de leitura é passo primeiro, comentário
+ * depois, e o movimento diz isso sem precisar de rótulo.
+ */
+function Passo({ indice, texto, nota, feito, aoAlternar }) {
+  const entrada = useEntrada("-14% 0px -10% 0px");
+  const calmo = useReducedMotion();
+  return (
+    <motion.li
+      className="passo"
+      variants={subir}
+      {...entrada}
+      transition={{ duration: DUR.medio, ease: EASE.papel }}
+    >
+      <motion.button
+        type="button"
+        className="passo-corpo"
+        data-feito={feito}
+        aria-pressed={feito}
+        onClick={aoAlternar}
+        whileHover={{ x: 3 }}
+        whileTap={{ scale: 0.995 }}
+        transition={MOLA}
+      >
+        <motion.span
+          className="passo-num"
+          aria-hidden="true"
+          animate={
+            feito
+              ? { color: "var(--color-accent)", scale: 0.92 }
+              : { color: "var(--color-accent-300)", scale: 1 }
+          }
+          transition={MOLA}
+        >
+          {String(indice + 1).padStart(2, "0")}
+        </motion.span>
+        <span className="passo-texto">
+          {texto}
+          <motion.span
+            className="risco risco-passo"
+            aria-hidden="true"
+            initial={false}
+            animate={{ scaleX: feito ? 1 : 0 }}
+            style={{ originX: 0 }}
+            transition={{ duration: DUR.lento, ease: EASE.papel }}
+          />
+        </span>
+      </motion.button>
+
+      {nota && (
+        <motion.aside
+          className="nota"
+          initial={calmo ? false : { opacity: 0, x: 18 }}
+          whileInView={calmo ? undefined : { opacity: 1, x: 0 }}
+          viewport={{ once: true, margin: "-14% 0px -10% 0px" }}
+          transition={{ duration: DUR.medio, ease: EASE.papel, delay: 0.14 }}
+          whileHover={{ x: -2, borderColor: "var(--color-accent)" }}
+        >
+          <span className="nota-rotulo">da internet</span>
+          <p className="nota-texto">{nota}</p>
+        </motion.aside>
+      )}
+    </motion.li>
+  );
+}
+
+/**
+ * Barra de progresso da cozinha.
+ *
+ * Não estava no mockup: nasceu do fato de os passos já serem marcáveis e de
+ * ninguém, de mão suja, conseguir contar quantos faltam. Só aparece depois do
+ * primeiro passo marcado — antes disso seria ruído mostrando "0%".
+ */
+function Progresso({ feitos, total }) {
+  const calmo = useReducedMotion();
+  const fracao = total ? feitos / total : 0;
+  const pronto = feitos === total && total > 0;
+
+  return (
+    <AnimatePresence initial={false}>
+      {feitos > 0 && (
+        <motion.div
+          className="progresso"
+          initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+          animate={{ opacity: 1, height: "auto", marginBottom: 26 }}
+          exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+          transition={{ duration: DUR.medio, ease: EASE.papel }}
+        >
+          <div className="progresso-linha">
+            <motion.div
+              className="progresso-barra"
+              animate={{ scaleX: fracao }}
+              style={{ originX: 0 }}
+              transition={calmo ? { duration: 0 } : MOLA_MACIA}
+            />
+          </div>
+          {/* `role="status"`: quem usa leitor de tela ouve "3 de 8 passos" ao
+              marcar, em vez de descobrir o progresso só se voltar até aqui */}
+          <div className="progresso-texto" role="status">
+            {pronto ? (
+              <motion.span
+                className="progresso-pronto"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={MOLA}
+              >
+                pronto · bom apetite
+              </motion.span>
+            ) : (
+              <span>
+                {feitos} de {total} passos
+              </span>
+            )}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

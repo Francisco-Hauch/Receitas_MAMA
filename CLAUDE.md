@@ -61,13 +61,50 @@ São *momentos*: de vezes diferentes ou do meio do preparo. A mais recente é a
 que vai grande no topo da receita e no card da lista; as outras ficam na galeria
 da coluna lateral, sem legenda.
 
+As fotos de `data/fotos/` **entram no build** como os JSONs (`import.meta.glob`
+em `dados.js`). A ligação é o número que abre o nome do arquivo: `0003-2.png` é
+a segunda foto da receita `0003-…`, e o **maior número é a mais recente**, então
+`receita.fotos[0]` é sempre a foto grande. Receita sem foto cai no monograma na
+moldura vazia, como antes.
+
+**Movimento.** O site é animado, e o movimento é parte do design system, não
+enfeite solto. A estética é editorial: entra subindo e clareando, sai encolhendo
+e rápido, distância curta (18px é o padrão, 34px só no hero). Nada pula, nada
+pisca, nada gira — movimento grande em tipografia serifada lê como
+instabilidade.
+
+Os tokens vivem em **dois lugares que precisam andar juntos**: `movimento.js`
+(em segundos, para a Motion) e o bloco `--mov-*` / `--ease-*` no topo do
+`estilo.css` (em ms, para o que é animado por folha de estilo). Mudar de um lado
+exige mudar do outro.
+
+Duas regras de fundo:
+
+- **Feedback é mola, cena é duração.** Toque do dedo (marcar ingrediente, abrir
+  foto) usa mola, porque responde ao gesto. Troca de cena (página, foto do
+  carrossel) usa duração fixa, porque é narrativa.
+- **`prefers-reduced-motion` é desligar, não acelerar.** Para quem pediu menos
+  movimento, bloco revelado por scroll aparece **já visível** (`useEntrada()` em
+  `movimento.js`) — conteúdo que depende de rolagem para existir é exatamente o
+  que essa preferência pede para evitar. São dois mecanismos: o CSS no
+  `estilo.css` e o `<MotionConfig reducedMotion="user">` no `App.jsx`, porque a
+  Motion escreve transform inline e `transition: none` não alcança.
+
+A troca de tela usa a **View Transitions API** (não AnimatePresence): a foto do
+card e a foto do topo da receita têm o mesmo `view-transition-name`, e o
+navegador liga uma na outra. Onde a API não existe, a navegação acontece igual e
+só a animação de montagem da página aparece — é enfeite, nunca mecanismo.
+
 | Arquivo | Papel |
 |---|---|
 | `site/src/App.jsx` | Raiz. Roteia por hash entre Lista / Receita / tela de erro. **Não há mais rota de envio**: `#/enviar` (link antigo) troca para `#/`, e "mandar receita" no cabeçalho é botão, não link — incrementa o contador `chamado`, que leva a pessoa até a zona de arraste na home. |
 | `site/src/Lista.jsx` | Página principal: hero, **bloco de envio** (`Enviar`, só para quem pode enviar), busca por nome/ingrediente (sem acento, sem caixa) e filtro por tag. |
 | `site/src/Receita.jsx` | Tela principal. Hero (kicker/tag, título display, resumo, stats tempo/serve/dificuldade). Ingredientes e passos são botões marcáveis (estado some ao sair, de propósito — é sessão de cozinha). Sugestões da internet como card "da internet" ao lado do passo + seção "Dicas da internet" + fontes. Placeholders demo na lateral: "Fotos de momentos" (galeria sem legenda; a zona de arraste só aparece para quem pode enviar) e recados. |
 | `site/src/Enviar.jsx` | Bloco de envio da home (não é tela). Zona de arraste: o arquivo é que decide o tipo (imagem → foto, PDF/.docx/.txt/.md → documento); aceito o arquivo, abre o pop-up com nome e observações → `POST /api/receita`. Digitar a receita e mandar link são atalhos abaixo da zona, no mesmo pop-up. Recusa (tipo desconhecido, foto misturada com documento, limite de tamanho) acontece antes de abrir o pop-up. |
-| `site/src/dados.js` | Lê e indexa os JSONs; liga receita ↔ complemento pelo número da issue. |
+| `site/src/Galeria.jsx` | Fotos: moldura, carrossel do topo (crossfade + Ken Burns + anel de progresso), grade de miniaturas e o visor de tela cheia (teclado ←/→/Esc, arrasto, foco preso e devolvido). O visor mora num contexto porque quem o abre está em dois pontos distantes da árvore. |
+| `site/src/movimento.js` | **Tokens e hooks de movimento**: durações, curvas, molas, variants compartilhados, `useEntrada()`, contagem de números, relógio do carrossel, `comTransicao()`. Nenhum componente deve inventar duração ou curva por conta. |
+| `site/src/Revelar.jsx` | Peças de movimento reusadas: `<Revelar>`, `<ListaRevelada>`/`<ItemRevelado>`, `<TituloRevelado>` (título saindo de trás do papel, palavra a palavra — só em hero) e `<Contador>`. |
+| `site/src/dados.js` | Lê e indexa os JSONs **e as fotos**; liga receita ↔ complemento pelo número da issue e receita ↔ fotos pelo prefixo do nome do arquivo. |
 | `site/src/sessao.js` | Pergunta `/api/sessao` só para decidir o que mostrar. Segurança de verdade é no Worker. |
 | `site/src/estilo.css` | Design system "Caderno de Receitas": tokens (cores, serifas, espaçamento) + classes. Light-only. |
 | `site/src/worker.js` | **Backend** (Cloudflare Worker): rotas, login, sessão, API. **Não é front — não editar sem pedido.** |
@@ -101,3 +138,11 @@ No PowerShell usar `npm.cmd` (o `dev.cmd` já contorna a política de script).
 - **Dados no bundle**: mudar receita/complemento exige rebuild para aparecer.
 - **`sessao.js` é só tela**: esconder o botão de enviar é cortesia, não
   segurança. Se `/api/sessao` falhar, o site assume modo leitura.
+- **`transform` no `<main>` vira armadilha**: a animação de entrada da página
+  usa `animation-fill-mode: backwards`, nunca `both`. Com `both` o transform
+  final fica grudado no elemento, e transform cria bloco de contenção — todo
+  `position: fixed` de dentro (o visor de foto) passa a se posicionar em relação
+  ao `<main>` em vez da janela. Já quebrou uma vez.
+- **A dependência nova é a Motion** (`motion`, ~80 KB no bundle). Depois de
+  puxar esta branch é preciso rodar `npm install` dentro de `site/` antes do
+  `dev.cmd`, senão o import falha.
