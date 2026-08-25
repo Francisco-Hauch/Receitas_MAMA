@@ -25,6 +25,8 @@ import {
 
 const CAMINHO = "/api/receita";
 const SESSAO = "/api/sessao";
+/** `/api/receita/3/fotos` — acrescentar foto a uma receita que já existe. */
+const ROTA_FOTOS = /^\/api\/receita\/(\d+)\/fotos$/;
 const LOGIN = "/entrar";
 const SAIR = "/sair";
 
@@ -292,6 +294,164 @@ async function criarReceita(request, env) {
   }
 }
 
+/* ------------------------------------ fotos de uma receita que já existe */
+
+/**
+ * Por que esta rota existe separada de `/api/receita`:
+ *
+ * `/api/receita` **cria** — sobe o arquivo com nome aleatório e abre issue na
+ * fila. Serve para receita nova, cujo trabalho (transcrever) exige o Claude no
+ * PC de casa. Foto de momento não tem trabalho nenhum a fazer: é só guardar. A
+ * fila existe para pensar, não para armazenar — então esta rota commita
+ * direto, e a foto não espera o PC de casa ligar às 3h.
+ *
+ * A associação vem de graça do nome do arquivo: `data/fotos/0003-2.webp` é a
+ * segunda foto da receita da issue 3 (ver `dados.js`). O servidor só continua
+ * a contagem — e por isso precisa olhar o que já existe antes de escrever.
+ */
+
+const PASTA_RECEITAS = "data/receitas";
+
+/** Nomes dentro de uma pasta do repositório; pasta que não existe é lista vazia. */
+async function listarPasta(env, pasta) {
+  try {
+    const itens = await github(env, `/contents/${pasta}`);
+    return Array.isArray(itens) ? itens.map((i) => i.name) : [];
+  } catch (e) {
+    if (String(e.message).includes("GitHub 404")) return [];
+    throw e;
+  }
+}
+
+/**
+ * Um único commit com todos os arquivos, pela Git Data API.
+ *
+ * Um PUT por arquivo (o jeito do `subirArquivo`) custa um commit por arquivo —
+ * e cada commit é uma reconstrução do site na Cloudflare. Cinco fotos viravam
+ * cinco builds enfileirados, e a pessoa esperando a última.
+ *
+ * O PATCH da ref vai **sem force**: se alguém commitou nesse meio-tempo (a
+ * outra pessoa mandando foto, o worker do PC publicando), o GitHub recusa por
+ * não ser fast-forward em vez de apagar o commit do outro. Quem chama tenta de
+ * novo, recontando os índices.
+ */
+async function commitarArquivos(env, arquivos, mensagem) {
+  const repo = await github(env, "");
+  const ramo = env.GITHUB_BRANCH || repo.default_branch;
+
+  const ref = await github(env, `/git/ref/heads/${ramo}`);
+  const base = ref.object.sha;
+  const commitBase = await github(env, `/git/commits/${base}`);
+
+  const folhas = [];
+  for (const arquivo of arquivos) {
+    const blob = await github(env, "/git/blobs", {
+      method: "POST",
+      body: JSON.stringify({ content: arquivo.base64, encoding: "base64" }),
+    });
+    folhas.push({
+      path: arquivo.caminho,
+      mode: "100644",
+      type: "blob",
+      sha: blob.sha,
+    });
+  }
+
+  const arvore = await github(env, "/git/trees", {
+    method: "POST",
+    body: JSON.stringify({ base_tree: commitBase.tree.sha, tree: folhas }),
+  });
+
+  const commit = await github(env, "/git/commits", {
+    method: "POST",
+    body: JSON.stringify({
+      message: mensagem,
+      tree: arvore.sha,
+      parents: [base],
+    }),
+  });
+
+  await github(env, `/git/refs/heads/${ramo}`, {
+    method: "PATCH",
+    body: JSON.stringify({ sha: commit.sha }),
+  });
+
+  return commit.sha;
+}
+
+/** O ramo andou embaixo de nós — dá para tentar de novo. */
+const corridaDeRef = (e) =>
+  /GitHub (409|422)/.test(String(e.message));
+
+async function guardarFotos(request, env, numero) {
+  let corpo;
+  try {
+    corpo = await request.json();
+  } catch {
+    return json({ erro: "corpo da requisição não era JSON" }, 400);
+  }
+
+  const fotos = Array.isArray(corpo.fotos) ? corpo.fotos : [];
+  if (fotos.length === 0) return json({ erro: "nenhuma foto no envio" }, 400);
+  if (fotos.length > LIMITE_ARQUIVOS) {
+    return json({ erro: `no máximo ${LIMITE_ARQUIVOS} fotos por vez` }, 400);
+  }
+
+  const conferido = conferirArquivos(fotos, []);
+  if (conferido.erro) return json({ erro: conferido.erro }, conferido.status);
+
+  // O prefixo é o número da issue com quatro casas — a mesma regra do
+  // armazenar.py e do dados.js. Não é enfeite: é a ligação.
+  const prefixo = String(numero).padStart(4, "0");
+
+  try {
+    // A receita precisa existir. Sem esta conferência, quem souber o endereço
+    // planta arquivo com prefixo inventado, que fica órfão em data/fotos para
+    // sempre — ninguém vê, ninguém acha, ninguém apaga.
+    const receitas = await listarPasta(env, PASTA_RECEITAS);
+    const existe = receitas.some(
+      (nome) => nome.startsWith(`${prefixo}-`) && nome.endsWith(".json"),
+    );
+    if (!existe) return json({ erro: "receita não encontrada" }, 404);
+
+    for (let tentativa = 1; tentativa <= 3; tentativa += 1) {
+      const nomes = await listarPasta(env, PASTA_FOTOS);
+      let proxima = 0;
+      for (const nome of nomes) {
+        const partes = nome.match(/^(\d+)-(\d+)\./);
+        if (partes && partes[1] === prefixo) {
+          proxima = Math.max(proxima, Number(partes[2]));
+        }
+      }
+
+      const criados = conferido.anexos.map((anexo, i) => ({
+        ...anexo,
+        nome: `${prefixo}-${proxima + i + 1}.${anexo.extensao}`,
+      }));
+      for (const arquivo of criados) {
+        arquivo.caminho = `${PASTA_FOTOS}/${arquivo.nome}`;
+      }
+
+      try {
+        await commitarArquivos(
+          env,
+          criados,
+          `chore: fotos da receita #${numero} enviadas pelo site`,
+        );
+        return json({ fotos: criados.map((a) => a.nome) }, 201);
+      } catch (e) {
+        if (tentativa === 3 || !corridaDeRef(e)) throw e;
+        console.warn(`ref andou, tentando de novo (${tentativa}):`, e.message);
+      }
+    }
+
+    return json({ erro: "não consegui guardar agora; tente de novo" }, 503);
+  } catch (e) {
+    console.error("falha ao guardar fotos:", e.message);
+    return json({ erro: "não consegui guardar a foto no repositório" }, 502);
+  }
+}
+
 const html = (corpo, status = 200, cabecalhos = {}) =>
   new Response(corpo, {
     status,
@@ -394,6 +554,18 @@ export default {
         return json({ erro: "servidor sem GITHUB_TOKEN configurado" }, 500);
       }
       return criarReceita(request, env);
+    }
+
+    const fotos = url.pathname.match(ROTA_FOTOS);
+    if (fotos) {
+      if (request.method !== "POST") return json({ erro: "use POST" }, 405);
+      if (!podeFazer(nivel, "enviar")) {
+        return json({ erro: "seu acesso é só de leitura" }, 403);
+      }
+      if (!env.GITHUB_TOKEN) {
+        return json({ erro: "servidor sem GITHUB_TOKEN configurado" }, 500);
+      }
+      return guardarFotos(request, env, Number(fotos[1]));
     }
 
     if (url.pathname.startsWith("/api/")) {
