@@ -837,6 +837,41 @@ input[type="file"].busca { padding: 8px; font-size: 13px; }
 }
 .zona-alternativas .btn { font-size: 13px; padding-block: 2px; }
 
+/* — a mesma zona, do tamanho da coluna lateral da receita — */
+/* cabe sem empurrar a galeria para fora da dobra */
+.zona-lado {
+  margin-top: var(--space-3);
+  min-height: 96px;
+  gap: 6px;
+  padding: var(--space-3) 14px;
+}
+.zona-lado-titulo {
+  font-family: var(--font-heading);
+  font-size: 17px;
+  line-height: 1.15;
+  margin: 0;
+}
+.zona-lado-dica {
+  font-size: 11px;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--color-text) 50%, transparent);
+}
+.zona-lado .btn { font-size: 13px; }
+.zona-lado[data-enviando="true"] { cursor: progress; }
+
+/* foto já escolhida, ainda não visível na galeria — o site só reconstrói a
+   cada commit, e fingir que ela já está lá seria mentira. Nada pisca: a
+   opacidade mais baixa e o selo bastam para dizer "ainda não". */
+.plate-chegando { opacity: 0.5; cursor: default; }
+.plate-chegando[data-estado="guardada"] { opacity: 0.78; }
+.momento-recado {
+  margin-top: var(--space-2);
+  font-size: 12px;
+  line-height: 1.6;
+  color: color-mix(in srgb, var(--color-text) 58%, transparent);
+}
+.momento-recado .btn { font-size: 12px; padding-block: 0; }
+
 /* ------------------------------------------------------------- pop-up */
 .modal-fundo {
   position: fixed;

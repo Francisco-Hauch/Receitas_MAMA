@@ -1,17 +1,12 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
-import {
-  FotoDestaque,
-  GradeDeFotos,
-  ProvedorDeFotos,
-  useFotos,
-} from "./Galeria.jsx";
+import { FotoDestaque, ProvedorDeFotos } from "./Galeria.jsx";
 import { Regua } from "./Lista.jsx";
+import Momentos from "./Momentos.jsx";
 import { Contador, ItemRevelado, ListaRevelada, Revelar, TituloRevelado } from "./Revelar.jsx";
 import { receitas } from "./dados.js";
 import { DUR, EASE, MOLA, MOLA_MACIA, subir, useEntrada } from "./movimento.js";
-import { useSessao } from "./sessao.js";
 
 /** Marcar ingrediente usado / passo feito. Some ao sair da página, de propósito:
  *  é para uma sessão de cozinha, não é estado que valha guardar. */
@@ -46,9 +41,6 @@ function dificuldade(passos) {
   return "Elaborada";
 }
 
-// Quantas molduras vazias a galeria mostra enquanto a receita não tem foto.
-const MOMENTOS_DEMO = 4;
-
 export default function Receita({ receita }) {
   return (
     <ProvedorDeFotos fotos={receita.fotos}>
@@ -59,8 +51,6 @@ export default function Receita({ receita }) {
 
 function CorpoDaReceita({ receita }) {
   const c = receita.complemento;
-  const { podeEnviar } = useSessao();
-  const { fotos } = useFotos();
 
   const [usados, alternarUsado] = useMarcados();
   const [feitos, alternarFeito] = useMarcados();
@@ -204,35 +194,7 @@ function CorpoDaReceita({ receita }) {
         </div>
 
         <aside className="receita-lado">
-          <Revelar como="h6" className="secao-titulo">
-            Fotos de momentos
-          </Revelar>
-          <Revelar como="p" className="secao-lede" atraso={0.05}>
-            De vezes diferentes ou do meio do preparo. A mais recente é a que
-            aparece grande aqui em cima e no card da lista.
-          </Revelar>
-
-          {podeEnviar && (
-            <motion.div
-              className="demo-zona demo-zona-compacta"
-              whileHover={{ borderColor: "var(--color-accent)", y: -2 }}
-              transition={MOLA}
-            >
-              <div className="text-muted" style={{ fontSize: "12px" }}>
-                Arraste aqui as fotos deste preparo
-              </div>
-            </motion.div>
-          )}
-
-          <GradeDeFotos vazias={MOMENTOS_DEMO} />
-
-          {/* o selo de demonstração só faz sentido enquanto não há foto de
-              verdade: com foto, a galeria é real e o selo mentiria */}
-          {fotos.length === 0 && (
-            <p style={{ marginTop: "10px" }}>
-              <span className="demo-selo">demonstração</span>
-            </p>
-          )}
+          <Momentos receita={receita} />
 
           {outras.length > 0 && (
             <>

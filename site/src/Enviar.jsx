@@ -1,5 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { Miniatura, useArrasto } from "./Arrastar.jsx";
+import {
+  ACEITA_TUDO,
+  ARQUIVO,
+  LIMITE_ARQUIVOS,
+  LIMITE_TOTAL,
+  chave,
+  conferir,
+  lerBase64,
+  tamanho,
+  tipoDoArquivo,
+} from "./arquivos.js";
+
 /**
  * Mandar uma receita — bloco da página principal, não uma tela à parte.
  *
@@ -16,119 +29,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * precisa valer.
  */
 
-/** Tipos que mandam arquivo em vez de texto, com a configuração de cada um. */
-const ARQUIVO = {
-  foto: {
-    rotulo: "Fotos do caderno",
-    dica: "Pode mandar mais de uma se a receita ocupar duas páginas.",
-    aceita: "image/png,image/jpeg,image/webp,image/heic",
-    // Espelha LIMITE_FOTO no worker.js. Conferir aqui é cortesia: quem recusa
-    // de verdade é o servidor, mas descobrir o excesso depois de subir 20 MB
-    // pelo celular é castigo desnecessário.
-    limite: 8,
-  },
-  documento: {
-    rotulo: "Documentos da receita",
-    dica: "PDF, Word (.docx) ou texto (.txt, .md). Pode mandar mais de um.",
-    aceita:
-      ".pdf,.docx,.txt,.md,application/pdf," +
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document," +
-      "text/plain,text/markdown",
-    // Espelha LIMITE_DOCUMENTO no worker.js.
-    limite: 10,
-  },
-};
-
-/** O que a zona de arraste aceita, somando os dois tipos de arquivo. */
-const ACEITA_TUDO = `${ARQUIVO.foto.aceita},${ARQUIVO.documento.aceita}`;
-
-const MB = 1024 * 1024;
-
-// Espelham LIMITE_TOTAL e LIMITE_ARQUIVOS no worker.js.
-const LIMITE_TOTAL = 25;
-const LIMITE_ARQUIVOS = 6;
-
-const EXT_FOTO = [".png", ".jpg", ".jpeg", ".webp", ".heic", ".heif"];
-const EXT_DOCUMENTO = [".pdf", ".docx", ".txt", ".md"];
-
-const emMB = (bytes) => `${(bytes / MB).toFixed(1).replace(".", ",")} MB`;
-
-/** Tamanho para o olho humano: recado de celular em MB vira "0,0 MB". */
-const tamanho = (bytes) =>
-  bytes < 0.1 * MB ? `${Math.max(1, Math.round(bytes / 1024))} KB` : emMB(bytes);
-
-const termina = (nome, extensoes) =>
-  extensoes.some((e) => nome.toLowerCase().endsWith(e));
-
-/**
- * "foto", "documento" ou null — o arquivo é que diz o tipo do envio.
- *
- * O `type` do navegador é a primeira palavra, mas não é confiável: HEIC do
- * iPhone e .md costumam chegar com type vazio. Por isso a extensão decide no
- * empate.
- */
-function tipoDoArquivo(arquivo) {
-  if (arquivo.type.startsWith("image/")) return "foto";
-  if (
-    arquivo.type === "application/pdf" ||
-    arquivo.type.startsWith("text/") ||
-    arquivo.type.includes("wordprocessingml")
-  ) {
-    return "documento";
-  }
-  if (termina(arquivo.name, EXT_FOTO)) return "foto";
-  if (termina(arquivo.name, EXT_DOCUMENTO)) return "documento";
-  return null;
-}
-
-/** A queixa sobre os arquivos escolhidos, ou null se estiver tudo bem. */
-function conferir(arquivos, limite) {
-  if (arquivos.length > LIMITE_ARQUIVOS) {
-    return `São ${arquivos.length} arquivos; o limite é ${LIMITE_ARQUIVOS} por receita.`;
-  }
-
-  const grande = arquivos.find((a) => a.size > limite * MB);
-  if (grande) {
-    return `"${grande.name}" tem ${emMB(grande.size)} e o limite por arquivo é ${limite} MB.`;
-  }
-
-  const total = arquivos.reduce((soma, a) => soma + a.size, 0);
-  if (total > LIMITE_TOTAL * MB) {
-    return `Os arquivos somam ${emMB(total)} e o limite é ${LIMITE_TOTAL} MB. Mande em duas vezes.`;
-  }
-
-  return null;
-}
-
-/** Lê o arquivo como base64 puro (sem o "data:image/png;base64," na frente). */
-function lerBase64(arquivo) {
-  return new Promise((resolve, reject) => {
-    const leitor = new FileReader();
-    leitor.onerror = () => reject(new Error(`não consegui ler ${arquivo.name}`));
-    leitor.onload = () => resolve(String(leitor.result).split(",")[1]);
-    leitor.readAsDataURL(arquivo);
-  });
-}
-
-/** Identidade estável de um arquivo, para key e para não repetir no monte. */
-const chave = (a) => `${a.name}-${a.size}-${a.lastModified}`;
-
-/** Miniatura da imagem; o endereço temporário morre junto com o componente. */
-function Miniatura({ arquivo }) {
-  const [url, setUrl] = useState(null);
-
-  useEffect(() => {
-    const endereco = URL.createObjectURL(arquivo);
-    setUrl(endereco);
-    return () => URL.revokeObjectURL(endereco);
-  }, [arquivo]);
-
-  return (
-    <span className="miniatura plate">
-      {url ? <img src={url} alt="" /> : null}
-    </span>
-  );
-}
 
 export default function Enviar({ chamado = 0 }) {
   const [tipo, setTipo] = useState(null);
@@ -143,12 +43,12 @@ export default function Enviar({ chamado = 0 }) {
   const [resultado, setResultado] = useState(null);
   const [erro, setErro] = useState(null);
   const [erroZona, setErroZona] = useState(null);
-  const [arrastando, setArrastando] = useState(false);
   const [destaque, setDestaque] = useState(false);
 
-  // dragenter/dragleave disparam também ao passar sobre os filhos da zona;
-  // contar as entradas evita a borda piscando enquanto o mouse atravessa.
-  const profundidade = useRef(0);
+  // o gesto em si (contagem de dragenter, arquivo solto fora da zona) mora no
+  // hook — é o mesmo da zona de fotos da receita
+  const { arrastando, props: arraste } = useArrasto(receber);
+
   const seletor = useRef(null);
   const fundo = useRef(null);
   const primeiroCampo = useRef(null);
@@ -201,20 +101,6 @@ export default function Enviar({ chamado = 0 }) {
       clearTimeout(relogio);
     };
   }, [chamado]);
-
-  /**
-   * Sem isso, soltar o arquivo um centímetro fora da zona faz o navegador
-   * abrir o arquivo e o formulário some junto com o que já foi digitado.
-   */
-  useEffect(() => {
-    const engolir = (e) => e.preventDefault();
-    window.addEventListener("dragover", engolir);
-    window.addEventListener("drop", engolir);
-    return () => {
-      window.removeEventListener("dragover", engolir);
-      window.removeEventListener("drop", engolir);
-    };
-  }, []);
 
   /** Recebe o que veio do arraste ou do seletor e abre o pop-up se der. */
   function receber(lista) {
@@ -288,24 +174,6 @@ export default function Enviar({ chamado = 0 }) {
     const sobrou = arquivos.filter((a) => chave(a) !== chave(alvo));
     setArquivos(sobrou);
     setErro(sobrou.length > 0 ? conferir(sobrou, config.limite) : null);
-  }
-
-  function aoSoltar(evento) {
-    evento.preventDefault();
-    profundidade.current = 0;
-    setArrastando(false);
-    receber(evento.dataTransfer.files);
-  }
-
-  function aoEntrar(evento) {
-    evento.preventDefault();
-    profundidade.current += 1;
-    setArrastando(true);
-  }
-
-  function aoSair() {
-    profundidade.current = Math.max(0, profundidade.current - 1);
-    if (profundidade.current === 0) setArrastando(false);
   }
 
   async function enviar(evento) {
@@ -396,10 +264,7 @@ export default function Enviar({ chamado = 0 }) {
         className="zona"
         data-destaque={destaque}
         data-arrastando={arrastando}
-        onDragEnter={aoEntrar}
-        onDragOver={(e) => e.preventDefault()}
-        onDragLeave={aoSair}
-        onDrop={aoSoltar}
+        {...arraste}
       >
         {/* no celular ninguém arrasta nada: lá o convite é o botão */}
         <p className="zona-titulo">
