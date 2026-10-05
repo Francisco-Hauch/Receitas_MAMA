@@ -6,6 +6,7 @@
  * mão: usa `<Revelar>` e herda o jeito da casa.
  */
 
+import { Fragment } from "react";
 import { motion } from "motion/react";
 
 import {
@@ -102,19 +103,24 @@ export function TituloRevelado({ texto, como = "h1", atraso = 0, ...resto }) {
       {linhas.map((linha, i) => (
         <span className="mascara-linha" key={i}>
           {linha.map(({ palavra, atraso: a }, j) => (
-            <span className="mascara" key={j}>
-              <motion.span
-                className="mascara-alvo"
-                variants={mascarado}
-                transition={{
-                  duration: DUR.lento,
-                  ease: EASE.papel,
-                  delay: atraso + a,
-                }}
-              >
-                {palavra}
-              </motion.span>
-            </span>
+            /* o espaço entre palavras é texto de verdade, não margem: assim ele
+             * some na quebra de linha e a segunda linha não começa recuada */
+            <Fragment key={j}>
+              {j > 0 && " "}
+              <span className="mascara">
+                <motion.span
+                  className="mascara-alvo"
+                  variants={mascarado}
+                  transition={{
+                    duration: DUR.lento,
+                    ease: EASE.papel,
+                    delay: atraso + a,
+                  }}
+                >
+                  {palavra}
+                </motion.span>
+              </span>
+            </Fragment>
           ))}
         </span>
       ))}

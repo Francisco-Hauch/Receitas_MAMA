@@ -80,12 +80,18 @@ export default function App() {
     restDelta: 0.001,
   });
   // o cabeçalho encolhe nos primeiros 120px e ganha sombra: a marca continua
-  // presente, só para de ocupar o mesmo que ocupava com a página no topo
+  // presente, só para de ocupar o mesmo que ocupava com a página no topo.
+  // A sombra é `drop-shadow` (filtro), não `box-shadow`: assim ela contorna a
+  // barra de renda recortada embaixo do cabeçalho em vez de desenhar um
+  // retângulo reto por trás das meias-luas.
   const alturaTopo = useTransform(scrollY, [0, 120], [14, 9], { clamp: true });
   const sombraTopo = useTransform(
     scrollY,
     [0, 120],
-    ["0 0px 0px rgba(45,43,43,0)", "0 6px 20px rgba(45,43,43,0.09)"],
+    [
+      "drop-shadow(0px 0px 0px rgba(42,41,15,0))",
+      "drop-shadow(0px 5px 12px rgba(42,41,15,0.14))",
+    ],
     { clamp: true },
   );
 
@@ -93,14 +99,14 @@ export default function App() {
 
   return (
     <MotionConfig reducedMotion="user">
-      {/* fio dourado de progresso de leitura, colado no topo da janela */}
+      {/* fio oliva de progresso de leitura, colado no topo da janela */}
       <motion.div
         className="progresso-leitura"
         style={{ scaleX: progresso }}
         aria-hidden="true"
       />
 
-      <motion.header className="topo" style={{ boxShadow: sombraTopo }}>
+      <motion.header className="topo" style={{ filter: sombraTopo }}>
         <motion.div
           className="topo-interno"
           style={{ paddingTop: alturaTopo, paddingBottom: alturaTopo }}
