@@ -1,0 +1,75 @@
+{
+  "issue": 9,
+  "titulo": "Pão Multigrãos",
+  "porcoes": null,
+  "tempo_min": null,
+  "ingredientes": [
+    {
+      "bruto": "400g farinha de trigo",
+      "item": "farinha de trigo",
+      "qtd": 400.0,
+      "unidade": "g"
+    },
+    {
+      "bruto": "8g sal",
+      "item": "sal",
+      "qtd": 8.0,
+      "unidade": "g"
+    },
+    {
+      "bruto": "280-320g água",
+      "item": "água",
+      "qtd": 300.0,
+      "unidade": "ml"
+    },
+    {
+      "bruto": "40g grãos variados (gergelim, chia, linhaça)",
+      "item": "grãos variados (gergelim, chia, linhaça)",
+      "qtd": 40.0,
+      "unidade": "g"
+    },
+    {
+      "bruto": "1g fermento biológico seco instantâneo",
+      "item": "fermento biológico seco instantâneo",
+      "qtd": 1.0,
+      "unidade": "g"
+    },
+    {
+      "bruto": "100g aveia ou sementes de girassol (cobertura)",
+      "item": "aveia ou sementes de girassol, para a cobertura",
+      "qtd": 100.0,
+      "unidade": "g"
+    }
+  ],
+  "passos": [
+    "Escolha a mistura de grãos de acordo com a sua preferência",
+    "Toste os grãos numa frigideira em fogo médio, mexendo por 5 minutos, até começarem a estourar como pipoca",
+    "Transfira os grãos para uma xícara, adicione 40 g de água e espere cerca de 30 minutos até esfriar",
+    "Num recipiente, coloque os 400 g de farinha de trigo, 1 g de fermento biológico seco instantâneo e 8 g de sal",
+    "Junte os grãos tostados e hidratados",
+    "Adicione 240 g de água, podendo chegar a até 280 g",
+    "Apenas misture os ingredientes, sem sovar",
+    "Cubra e deixe descansar por 30 minutos",
+    "Faça sequências de dobras com as mãos umedecidas a cada 30 minutos, até completar 1 hora e 30 minutos desde a mistura, quando a massa deve atingir o ponto de véu",
+    "Faça uma última sequência de dobras e deixe fermentar por 2h30 (tempo para temperatura ambiente de 26 °C), até a massa dobrar de tamanho",
+    "Pré-modele a massa e deixe descansar por 15 minutos",
+    "Modele o pão dobrando a massa sobre si mesma; como ela é bem hidratada, fica um pouco mais mole",
+    "Umedeça a superfície do pão, passe na aveia (ou sementes de girassol) e coloque no cesto de fermentação",
+    "Cubra com um pano umedecido e deixe fermentar por 2 horas (ou leve à geladeira por 6 horas ou mais)",
+    "Pré-aqueça o forno a 250 °C por 30 minutos",
+    "Confira se a massa cresceu até acima da borda do cesto",
+    "Faça o corte na massa e coloque-a na panela de ferro tampada",
+    "Asse a 250 °C, com calor somente na parte de baixo, por 20 minutos",
+    "Retire a tampa da panela e asse por mais 20 minutos",
+    "Tire o pão da panela e deixe resfriar sobre uma grade por 30 minutos"
+  ],
+  "tags": [
+    "pão",
+    "fermentação lenta",
+    "forno",
+    "panela de ferro",
+    "café da manhã"
+  ],
+  "notas": "Receita recebida como link (amopaocaseiro.com.br), não do caderno. Rende 1 pão médio de 750 g; o site indica 50 min de manuseio, mas não um tempo total, por isso tempo_min ficou vazio. A água da lista (280-320 g) é a soma dos 40 g usados para hidratar os grãos com os 240-280 g da massa; em qtd ficou o valor médio (300 ml). Os passos de dobras, pré-modelagem e modelagem vêm de fotos com legendas curtas no site e foram condensados.",
+  "confianca": 0.8
+}
