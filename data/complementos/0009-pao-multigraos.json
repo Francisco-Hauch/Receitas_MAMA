@@ -1,0 +1,48 @@
+{
+  "issue": 9,
+  "porcoes": null,
+  "tempo_min": 450,
+  "temperatura_c": 250,
+  "ingredientes_ausentes": [
+    {
+      "item": "farinha para polvilhar o cesto",
+      "motivo": "Massa bem hidratada gruda no cesto de fermentação; polvilhar com farinha (ou usar pano enfarinhado) ajuda a desenformar sem rasgar."
+    }
+  ],
+  "passos_detalhados": [
+    {
+      "indice": 14,
+      "detalhe": "Pré-aqueça a panela de ferro já dentro do forno, com a tampa, durante os 20-30 minutos de pré-aquecimento — é a panela quente que dá o crescimento e a casca."
+    },
+    {
+      "indice": 16,
+      "detalhe": "Faça o corte com uma lâmina ou faca bem afiada, num gesto rápido; cuidado ao colocar a massa na panela, que estará muito quente."
+    },
+    {
+      "indice": 19,
+      "detalhe": "Esperar esfriar na grade antes de cortar deixa o miolo terminar de firmar; cortado quente, ele fica pegajoso."
+    }
+  ],
+  "dicas": [
+    "Somando os tempos da própria receita (tostar e hidratar os grãos, dobras, fermentações e forno), são cerca de 7h30 do começo ao fim; com a fermentação final na geladeira, dá para dividir em dois dias.",
+    "Para conservar, congele o pão já fatiado e descongele as fatias na torradeira ou numa frigideira tampada, borrifada com água, em fogo médio."
+  ],
+  "fontes": [
+    {
+      "url": "https://amopaocaseiro.com.br/receita/pao-multigraos/",
+      "titulo": "Pão Multigrãos - Amo Pão Caseiro",
+      "aviso": null
+    },
+    {
+      "url": "https://www.flamboesa.com.br/pao-de-fermentacao-lenta-semi-integral/",
+      "titulo": "Pão de fermentação lenta semi-integral - Flamboesa",
+      "aviso": null
+    },
+    {
+      "url": "https://panelinha.com.br/receita/pao-multigraos",
+      "titulo": "Pão multigrãos - Panelinha",
+      "aviso": null
+    }
+  ],
+  "confianca": 0.7
+}
